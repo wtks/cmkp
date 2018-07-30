@@ -1497,6 +1497,7 @@ func deleteRequestNote(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+/*
 // POST /assignment-group-notes
 func postAssignmentNote(c echo.Context) error {
 	claim := c.Get("user").(*jwt.Token).Claims.(*JwtCustomClaims)
@@ -1564,6 +1565,7 @@ func deleteAssignmentNote(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+*/
 
 // GET /deadlines
 func getDeadLines(c echo.Context) error {

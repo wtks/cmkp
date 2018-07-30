@@ -133,10 +133,12 @@ func main() {
 		requestNotes.GET("/:id", getRequestNote)
 		requestNotes.DELETE("/:id", deleteRequestNote)
 
-		assignmentNotes := api.Group("/assignment-notes")
-		assignmentNotes.POST("", postAssignmentNote, require(LevelPlanner))
-		assignmentNotes.GET("/:id", getAssignmentNote)
-		assignmentNotes.DELETE("/:id", deleteAssignmentNote, require(LevelPlanner))
+		/*
+			assignmentNotes := api.Group("/assignment-notes")
+			assignmentNotes.POST("", postAssignmentNote, require(LevelPlanner))
+			assignmentNotes.GET("/:id", getAssignmentNote)
+			assignmentNotes.DELETE("/:id", deleteAssignmentNote, require(LevelPlanner))
+		*/
 
 		deadlines := api.Group("/deadlines")
 		deadlines.GET("", getDeadLines)
