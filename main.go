@@ -176,7 +176,7 @@ func initAdminUser() error {
 			salt := generateRandomString()
 			u = &User{
 				Name:              "admin",
-				DisplayName:       "admin",
+				DisplayName:       "サーバー管理人",
 				Salt:              salt,
 				EncryptedPassword: toHash("password", salt),
 				Permission:        LevelAdmin,
