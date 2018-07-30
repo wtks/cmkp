@@ -71,4 +71,5 @@ fabric.properties
 .idea/
 cmkp.iml
 cmkp
-/static
+static/
+vendor/
