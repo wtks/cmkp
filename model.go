@@ -21,11 +21,11 @@ var (
 		&UserRequestNote{},
 		&UserCirclePriority{},
 		&DeadLine{},
-		&AssignmentGroup{},
-		&AssignmentGroupNote{},
-		&AssignmentItem{},
-		&FreeAssignmentItem{},
-		&UserRequestNoteUnread{},
+		// &AssignmentGroup{},
+		// &AssignmentGroupNote{},
+		// &AssignmentItem{},
+		// &FreeAssignmentItem{},
+		// &UserRequestNoteUnread{},
 	}
 )
 
