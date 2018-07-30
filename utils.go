@@ -131,7 +131,7 @@ func bindAndValidate(c echo.Context, v interface{}) error {
 }
 
 func generateRandomString() string {
-	return base64.RawStdEncoding.EncodeToString(uuid.Must(uuid.NewV4()).Bytes())
+	return base64.RawStdEncoding.EncodeToString(uuid.NewV4().Bytes())
 }
 
 func hasFlag(c echo.Context, flag string) bool {
