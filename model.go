@@ -192,6 +192,6 @@ type FreeAssignmentItem struct {
 
 type DeadLine struct {
 	ID       uint   `gorm:"primary_key"`
-	Key      string `gorm:"unique"`
+	Key      string `gorm:"type:varchar(30);unique"`
 	DateTime time.Time
 }
