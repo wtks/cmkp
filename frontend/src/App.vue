@@ -7,7 +7,7 @@
             v-icon person
           v-list-tile-content
             v-list-tile-title {{ myDisplayName }}
-        v-list-tile(@click.native="passwordDialog.open = true")
+        v-list-tile(@click="passwordDialog.open = true")
           v-list-tile-action
             v-icon vpn_key
           v-list-tile-content
@@ -90,8 +90,8 @@
             v-text-field(v-model="passwordDialog.confirmPassword" :rules="[rules.confirmPassword]" label="新しいパスワード(確認)" type="password" required)
         v-card-actions
           v-spacer
-          v-btn(@click="passwordDialog.open = false") キャンセル
-          v-btn(color="primary" :disabled="!passwordDialog.valid || loading" :loading="loading" @click.native="changePassword") 変更
+          v-btn(flat @click="passwordDialog.open = false") キャンセル
+          v-btn(flat color="primary" :disabled="!passwordDialog.valid || loading" :loading="loading" @click.native="changePassword") 変更
 </template>
 
 <script>
