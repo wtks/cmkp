@@ -65,13 +65,17 @@ func main() {
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 2}))
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.HasPrefix(c.Path(), "/api")
+			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "service-worker.js")
 		},
 		Root:   "static",
 		Index:  "index.html",
 		Browse: false,
 		HTML5:  true,
 	}))
+	e.GET("/service-worker.js", func(c echo.Context) error {
+		c.Response().Header().Set("Cache-Control", "no-cache")
+		return c.File("static/service-worker.js")
+	})
 
 	// routing api
 	require := accessControlMiddleware
