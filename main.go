@@ -65,7 +65,7 @@ func main() {
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 2}))
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "service-worker.js")
+			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "/service-worker.js")
 		},
 		Root:   "static",
 		Index:  "index.html",
