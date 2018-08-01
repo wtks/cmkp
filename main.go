@@ -63,6 +63,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 2}))
+	e.Use(middleware.Rewrite(map[string]string{"/": "/index.html"}))
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Skipper: func(c echo.Context) bool {
 			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "/service-worker.js") || strings.HasPrefix(c.Path(), "/index.html")
