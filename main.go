@@ -72,7 +72,7 @@ func main() {
 		Browse: false,
 		HTML5:  true,
 	}))
-	e.GET("/service-worker.js", func(c echo.Context) error {
+	e.Match([]string{"GET", "HEAD"}, "/service-worker.js", func(c echo.Context) error {
 		c.Response().Header().Set("Cache-Control", "no-cache")
 		return c.File("static/service-worker.js")
 	})
