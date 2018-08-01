@@ -65,7 +65,7 @@ func main() {
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 2}))
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "/service-worker.js")
+			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "/service-worker.js") || strings.HasPrefix(c.Path(), "/index.html")
 		},
 		Root:   "static",
 		Index:  "index.html",
@@ -73,8 +73,12 @@ func main() {
 		HTML5:  true,
 	}))
 	e.Match([]string{"GET", "HEAD"}, "/service-worker.js", func(c echo.Context) error {
-		c.Response().Header().Set("Cache-Control", "no-cache")
+		c.Response().Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
 		return c.File("static/service-worker.js")
+	})
+	e.Match([]string{"GET", "HEAD"}, "/index.html", func(c echo.Context) error {
+		c.Response().Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
+		return c.File("static/index.html")
 	})
 
 	// routing api
