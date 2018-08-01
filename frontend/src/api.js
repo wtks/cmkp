@@ -57,6 +57,12 @@ export default {
     deleteToken()
     initClient(null)
   },
+  changeMyPassword: async (oldpass, newpass) => {
+    await client.patch('/me/password', {
+      old_password: oldpass,
+      new_password: newpass
+    })
+  },
   getDeadlines: async () => {
     const res = await client.get('/deadlines')
     return res.data

@@ -7,6 +7,11 @@
             v-icon person
           v-list-tile-content
             v-list-tile-title {{ myDisplayName }}
+        v-list-tile(@click.native="passwordDialog.open = true")
+          v-list-tile-action
+            v-icon vpn_key
+          v-list-tile-content
+            v-list-tile-title パスワード変更
         v-list-tile(@click="logout")
           v-list-tile-action
             v-icon power_settings_new
@@ -75,7 +80,18 @@
     v-footer(app)
       span cmkp &copy; wtks 2018
     error-dialog
-
+    v-dialog(v-model="passwordDialog.open" persistent width=500)
+      v-card
+        v-card-title パスワード変更
+        v-card-text
+          v-form(v-model="passwordDialog.valid" lazy-validation)
+            v-text-field(v-model="passwordDialog.oldPassword" :rules="[rules.password]" label="現在のパスワード" type="password" required)
+            v-text-field(v-model="passwordDialog.newPassword" :rules="[rules.password]" label="新しいパスワード" type="password" required)
+            v-text-field(v-model="passwordDialog.confirmPassword" :rules="[rules.confirmPassword]" label="新しいパスワード(確認)" type="password" required)
+        v-card-actions
+          v-spacer
+          v-btn(@click="passwordDialog.open = false") キャンセル
+          v-btn(color="primary" :disabled="!passwordDialog.valid || loading" :loading="loading" @click.native="changePassword") 変更
 </template>
 
 <script>
@@ -90,7 +106,19 @@ export default {
   },
   data () {
     return {
-      drawer: false
+      drawer: false,
+      passwordDialog: {
+        open: false,
+        valid: false,
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+        loading: false
+      },
+      rules: {
+        password: value => /^[a-zA-Z0-9!#$%&()*+,.:;=?@[\]^_{}-]+$/.test(value) || 'パスワードは半角英数文字と記号のみ使えます',
+        confirmPassword: value => this.passwordDialog.newPassword === value || '新しいパスワードを正しく入力してください'
+      }
     }
   },
   computed: {
@@ -126,6 +154,24 @@ export default {
     logout: function () {
       api.logout()
       location.reload(true)
+    },
+    changePassword: async function () {
+      this.passwordDialog.loading = true
+      try {
+        await api.changeMyPassword(this.passwordDialog.oldPassword, this.passwordDialog.newPassword)
+        this.passwordDialog.oldPassword = ''
+        this.passwordDialog.newPassword = ''
+        this.passwordDialog.open = false
+      } catch (e) {
+        console.error(e)
+        if (e.response) {
+          this.$bus.$emit('error', e.response.data.message)
+        } else {
+          this.$bus.$emit('error')
+        }
+      } finally {
+        this.passwordDialog.loading = false
+      }
     }
   }
 }
