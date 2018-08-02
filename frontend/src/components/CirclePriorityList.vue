@@ -6,8 +6,8 @@
         v-list-tile-content
           v-list-tile-title
             | {{ i }}.&nbsp;
-            router-link(v-if="ids.length > i" :to="'/circles/'+ids[i]" exact)
-              circle-name(:id="ids[i]")
+            router-link(v-if="ids.length > i-1" :to="'/circles/'+ids[i-1]" exact)
+              circle-name(:id="ids[i-1]")
 </template>
 
 <script>
