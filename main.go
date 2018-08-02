@@ -63,24 +63,15 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 2}))
-	e.Use(middleware.Rewrite(map[string]string{"/": "/index.html"}))
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	e.Use(StaticMiddleware(middleware.StaticConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.HasPrefix(c.Path(), "/api") || strings.HasPrefix(c.Path(), "/service-worker.js") || strings.HasPrefix(c.Path(), "/index.html")
+			return strings.HasPrefix(c.Path(), "/api")
 		},
 		Root:   "static",
 		Index:  "index.html",
 		Browse: false,
 		HTML5:  true,
 	}))
-	e.Match([]string{"GET", "HEAD"}, "/service-worker.js", func(c echo.Context) error {
-		c.Response().Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
-		return c.File("static/service-worker.js")
-	})
-	e.Match([]string{"GET", "HEAD"}, "/index.html", func(c echo.Context) error {
-		c.Response().Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0")
-		return c.File("static/index.html")
-	})
 
 	// routing api
 	require := accessControlMiddleware
