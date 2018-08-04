@@ -15,6 +15,13 @@
             span ◎限数・搬入数やお品書きなどの情報があればそのサークルのサークルメモに書いてもらえると助かります。また、価格未定で登録した商品は価格が決まり次第、リクエストの修正から入力してください。
       v-flex
         v-card
+          v-card-title 参加予定日
+          v-card-text
+            v-chip(v-if="entryDay1" color="primary" text-color="white" small) 1日目
+            v-chip(v-if="entryDay1" color="primary" text-color="white" small) 2日目
+            v-chip(v-if="entryDay1" color="primary" text-color="white" small) 3日目
+      v-flex
+        v-card
           v-card-title リクエスト受付締め切り日時
           v-card-text
             span 企業: {{ enterpriseDeadline.format('MM/DD HH:mm') }}
@@ -37,7 +44,10 @@ export default {
       'enterpriseDeadline',
       'day1Deadline',
       'day2Deadline',
-      'day3Deadline'
+      'day3Deadline',
+      'entryDay1',
+      'entryDay2',
+      'entryDay3'
     ])
   }
 }

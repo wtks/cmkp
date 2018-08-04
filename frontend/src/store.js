@@ -15,6 +15,9 @@ export default new Vuex.Store({
     myDisplayName: state => state.user != null ? state.user.display_name : '',
     isAdmin: state => state.user != null && state.user.permission >= 2,
     isPlanner: state => state.user != null && state.user.permission >= 1,
+    entryDay1: state => state.user != null && state.user.entry_day1,
+    entryDay2: state => state.user != null && state.user.entry_day2,
+    entryDay3: state => state.user != null && state.user.entry_day3,
     isEnterpriseDeadlineOver: state => {
       if (state.deadlines == null) {
         return false
