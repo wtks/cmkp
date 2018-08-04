@@ -18,8 +18,8 @@
           v-card-title 参加予定日
           v-card-text
             v-chip(v-if="entryDay1" color="primary" text-color="white" small) 1日目
-            v-chip(v-if="entryDay1" color="primary" text-color="white" small) 2日目
-            v-chip(v-if="entryDay1" color="primary" text-color="white" small) 3日目
+            v-chip(v-if="entryDay2" color="primary" text-color="white" small) 2日目
+            v-chip(v-if="entryDay3" color="primary" text-color="white" small) 3日目
       v-flex
         v-card
           v-card-title リクエスト受付締め切り日時
