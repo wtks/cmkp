@@ -1,0 +1,11 @@
+.DS_Store
+.idea/
+cmkp.iml
+cmkp
+static/
+vendor/
+.envrc
+.gitignore
+.git/
+frontend/node_modules
+frontend/dist
