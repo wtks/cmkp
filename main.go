@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"os"
 	"os/signal"
@@ -26,8 +26,6 @@ func init() {
 	viper.SetDefault("MYSQL_USERNAME", "root")
 	viper.SetDefault("MYSQL_PASSWORD", "password")
 	viper.SetDefault("PORT", 3000)
-	viper.SetDefault("CERT_CACHE_DIR", "./cert-cache")
-	viper.SetDefault("DOMAIN", "")
 	viper.AutomaticEnv()
 }
 
@@ -147,16 +145,8 @@ func main() {
 
 	// start server
 	go func() {
-		if len(viper.GetString("DOMAIN")) > 0 && viper.GetInt("PORT") == 443 {
-			e.AutoTLSManager.Cache = autocert.DirCache(viper.GetString("CERT_CACHE_DIR"))
-			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(viper.GetString("DOMAIN"))
-			if err := e.StartAutoTLS(":443"); err != nil {
-				e.Logger.Info("shutting down the server")
-			}
-		} else {
-			if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("PORT"))); err != nil {
-				e.Logger.Info("shutting down the server")
-			}
+		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("PORT"))); err != nil {
+			e.Logger.Info("shutting down the server")
 		}
 	}()
 
@@ -175,12 +165,11 @@ func initAdminUser() error {
 	u := &User{}
 	if err := db.Where(&User{Permission: LevelAdmin}).Take(u).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			salt := generateRandomString()
+			hash, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 			u = &User{
 				Name:              "admin",
 				DisplayName:       "サーバー管理人",
-				Salt:              salt,
-				EncryptedPassword: toHash("password", salt),
+				EncryptedPassword: string(hash),
 				Permission:        LevelAdmin,
 			}
 			if err := db.Create(u).Error; err != nil {

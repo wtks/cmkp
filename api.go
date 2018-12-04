@@ -5,6 +5,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 func login(c echo.Context) error {
 	req := struct {
 		User string `json:"username" validate:"username,required"`
-		Pass string `json:"password" validate:"printascii,required"`
+		Pass string `json:"password" validate:"printascii,required,max=50"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -31,7 +32,7 @@ func login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if toHash(req.Pass, user.Salt) != user.EncryptedPassword {
+	if !user.CheckPassword(req.Pass) {
 		return echo.NewHTTPError(http.StatusBadRequest, "ユーザー名またはパスワードが間違っています")
 	}
 
@@ -75,21 +76,24 @@ func changeMyPassword(c echo.Context) error {
 	}
 
 	req := struct {
-		OldPassword string `json:"old_password" validate:"printascii,required"`
-		NewPassword string `json:"new_password" validate:"printascii,required"`
+		OldPassword string `json:"old_password" validate:"printascii,required,max=50"`
+		NewPassword string `json:"new_password" validate:"printascii,required,max=50"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	if toHash(req.OldPassword, user.Salt) != user.EncryptedPassword {
+	if !user.CheckPassword(req.OldPassword) {
 		return echo.NewHTTPError(http.StatusUnauthorized, "password is wrong")
 	}
 
-	salt := generateRandomString()
-	encrypted := toHash(req.NewPassword, salt)
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
 
-	if err := db.Model(&user).Updates(&User{Salt: salt, EncryptedPassword: encrypted}).Error; err != nil {
+	if err := db.Model(&user).Updates(&User{EncryptedPassword: string(hash)}).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -345,7 +349,7 @@ func postUsers(c echo.Context) error {
 	req := struct {
 		UserName    string `json:"username"     validate:"username,required"`
 		DisplayName string `json:"display_name" validate:"max=30,required"`
-		Password    string `json:"password"     validate:"printascii,required"`
+		Password    string `json:"password"     validate:"printascii,required,max=50"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -364,12 +368,16 @@ func postUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusConflict, "そのIDのユーザーは既に存在します")
 	}
 
-	salt := generateRandomString()
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	u = &User{
 		Name:              req.UserName,
 		DisplayName:       req.DisplayName,
-		Salt:              salt,
-		EncryptedPassword: toHash(req.Password, salt),
+		EncryptedPassword: string(hash),
 		Permission:        LevelUser,
 	}
 	if err := db.Create(u).Error; err != nil {
@@ -453,16 +461,19 @@ func changeUserPassword(c echo.Context) error {
 	}
 
 	req := struct {
-		Password string `json:"password" validate:"printascii,required"`
+		Password string `json:"password" validate:"printascii,required,max=50"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	salt := generateRandomString()
-	encrypted := toHash(req.Password, salt)
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
 
-	if err := db.Model(user).Updates(&User{Salt: salt, EncryptedPassword: encrypted}).Error; err != nil {
+	if err := db.Model(&user).Updates(&User{EncryptedPassword: string(hash)}).Error; err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

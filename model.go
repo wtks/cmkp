@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -44,13 +45,17 @@ type User struct {
 	Name              string    `gorm:"type:varchar(20);unique" json:"name"`
 	DisplayName       string    `gorm:"type:varchar(30)"        json:"display_name"`
 	EncryptedPassword string    `gorm:"type:text"               json:"-"`
-	Salt              string    `gorm:"type:text"               json:"-"`
 	Permission        int       `                               json:"permission"`
 	EntryDay1         bool      `                               json:"entry_day1"`
 	EntryDay2         bool      `                               json:"entry_day2"`
 	EntryDay3         bool      `                               json:"entry_day3"`
 	CreatedAt         time.Time `gorm:"precision:6"             json:"created_at"`
 	UpdatedAt         time.Time `gorm:"precision:6"             json:"updated_at"`
+}
+
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.EncryptedPassword), []byte(password))
+	return err == nil
 }
 
 // クライアントでフルキャッシュ
@@ -150,44 +155,26 @@ func (ucp *UserCirclePriority) GetPrioritySlice() []uint {
 	return priority
 }
 
-type AssignmentGroup struct {
+type AssignmentsSet struct {
 	ID        uint `gorm:"primary_key"`
 	Day       int
 	UserID    *uint
+	Free      bool
+	Note      string
 	CreatedAt time.Time  `gorm:"precision:6"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6"`
 }
 
-type AssignmentGroupNote struct {
-	ID        uint       `gorm:"primary_key" json:"id"`
-	WriterID  uint       `                   json:"writer_id"`
-	GroupID   uint       `                   json:"group_id"`
-	Content   string     `gorm:"type:text"   json:"content"`
-	CreatedAt time.Time  `gorm:"precision:6" json:"created_at"`
-	DeletedAt *time.Time `gorm:"precision:6" json:"-"`
-}
-
 type AssignmentItem struct {
 	ID        uint `gorm:"primary_key"`
-	GroupID   uint
+	SetID     uint
 	ItemID    uint
 	Item      *Item `gorm:"association_autoupdate:false;association_autocreate:false" json:"-"`
 	Num       int
 	Order     int
 	CreatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6"`
-}
-
-type FreeAssignmentItem struct {
-	ID        uint `gorm:"primary_key"`
-	Day       int
-	ItemID    uint
-	Item      *Item `gorm:"association_autoupdate:false;association_autocreate:false" json:"-"`
-	Num       int
-	ChargerID *uint
-	CreatedAt time.Time `gorm:"precision:6"`
-	UpdatedAt time.Time `gorm:"precision:6"`
 }
 
 type DeadLine struct {

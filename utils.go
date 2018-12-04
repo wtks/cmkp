@@ -1,16 +1,12 @@
 package main
 
 import (
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/satori/go.uuid"
-	"golang.org/x/crypto/scrypt"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"net/url"
@@ -58,11 +54,6 @@ func convertStringsToUints(arr []string) (result []uint) {
 func mustParseUint(str string) uint {
 	n, _ := strconv.ParseUint(str, 10, 32)
 	return uint(n)
-}
-
-func toHash(pass string, salt string) string {
-	converted, _ := scrypt.Key([]byte(pass), []byte(salt), 16384, 8, 1, 32)
-	return hex.EncodeToString(converted[:])
 }
 
 func accessControlMiddleware(level int) func(echo.HandlerFunc) echo.HandlerFunc {
@@ -134,15 +125,6 @@ func bindAndValidate(c echo.Context, v interface{}) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	return nil
-}
-
-func generateRandomString() string {
-	return base64.RawStdEncoding.EncodeToString(uuid.NewV4().Bytes())
-}
-
-func hasFlag(c echo.Context, flag string) bool {
-	_, ok := c.QueryParams()[flag]
-	return ok
 }
 
 func isMySQLDuplicatedRecordErr(err error) bool {
