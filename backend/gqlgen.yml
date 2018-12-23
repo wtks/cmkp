@@ -1,0 +1,35 @@
+# .gqlgen.yml example
+#
+# Refer to https://gqlgen.com/config/
+# for detailed .gqlgen.yml documentation.
+
+schema:
+  - schema.graphql
+exec:
+  filename: generated.go
+model:
+  filename: model/generated.go
+  package: model
+resolver:
+  filename: resolver.go
+  type: Resolver
+
+models:
+  User:
+    model: github.com/wtks/cmkp/backend/model.User
+  Circle:
+    model: github.com/wtks/cmkp/backend/model.Circle
+  CircleMemo:
+    model: github.com/wtks/cmkp/backend/model.CircleMemo
+  Item:
+    model: github.com/wtks/cmkp/backend/model.Item
+  UserRequestNote:
+    model: github.com/wtks/cmkp/backend/model.UserRequestNote
+  UserRequestItem:
+    model: github.com/wtks/cmkp/backend/model.UserRequestItem
+  Deadline:
+    model: github.com/wtks/cmkp/backend/model.Deadline
+  UserCirclePriority:
+    model: github.com/wtks/cmkp/backend/model.UserCirclePriority
+  PriorityRank:
+    model: github.com/wtks/cmkp/backend/model.PriorityRank

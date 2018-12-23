@@ -1,11 +1,13 @@
 .DS_Store
 .idea/
 cmkp.iml
-cmkp
-static/
-vendor/
 .envrc
 .gitignore
 .git/
 frontend/node_modules
 frontend/dist
+
+backend/gqlgen.yml
+backend/Makefile
+backend/schema.graphql
+backend/scripts

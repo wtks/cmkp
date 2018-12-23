@@ -1,0 +1,170 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+scalar Time
+
+enum Role {
+  ADMIN
+  USER
+  PLANNER
+}
+
+type User {
+  id: Int!
+  name: String!
+  displayName: String!
+  entry(day: Int!): Boolean!
+  entryDays: [Int!]!
+  requestItems: [UserRequestItem!]!
+  requestNotes: [UserRequestNote!]!
+  circlePriorities: [UserCirclePriority!]!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Circle {
+  id: Int!
+  name: String!
+  author: String!
+  hall: String!
+  day: Int!
+  block: String!
+  space: String!
+  locationType: Int!
+  genre: String!
+  pixivId: Int
+  twitterId: String
+  niconicoId: Int
+  website: String!
+  items: [Item!]!
+  memos: [CircleMemo!]!
+  requestingUser: [User!]!
+  prioritized: [PriorityRank!]!
+  updatedAt: Time!
+}
+
+type CircleMemo {
+  id: Int!
+  circleId: Int!
+  circle: Circle!
+  userId: Int!
+  user: User!
+  content: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Item {
+  id: Int!
+  circleId: Int!
+  circle: Circle!
+  name: String!
+  price: Int!
+  createdAt: Time!
+  updatedAt: Time!
+  requests: [UserRequestItem!]!
+}
+
+type UserRequestNote {
+  id: Int!
+  userId: Int!
+  user: User!
+  content: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type UserRequestItem {
+  id: Int!
+  userId: Int!
+  user: User!
+  itemId: Int!
+  item: Item!
+  circle: Circle!
+  num: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Deadline {
+  day: Int!
+  datetime: Time!
+  updatedAt: Time!
+}
+
+type UserCirclePriority {
+  userId: Int!
+  user: User!
+  day: Int!
+  priority(rank: Int!): Int
+  priority1: Int
+  priority2: Int
+  priority3: Int
+  priority4: Int
+  priority5: Int
+  priorities: [Int]!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type PriorityRank {
+  circleId: Int!
+  circle: Circle!
+  userId: Int!
+  user: User!
+  rank: Int!
+}
+
+type Query {
+  me: User
+  myRequests: [UserRequestItem]
+  myRequestNotes: [UserRequestNote]
+  myRequestedCircles: [Circle]
+
+  user(id: Int!): User
+  users: [User]
+  circle(id: Int!): Circle
+  circles(q: String! = "", days: [Int!]): [Circle]
+  requestedCircles(day: Int! = -1): [Circle]
+  circleMemo(id: Int!): CircleMemo
+  circleMemos(circleId: Int!): [CircleMemo]
+  item(id: Int!): Item
+  items(circleId: Int!): [Item]
+  request(id: Int!): UserRequestItem
+  requestNote(id: Int!): UserRequestNote
+  requestNotes: [UserRequestNote]
+
+  deadline(day: Int!): Time!
+  deadlines: [Deadline]
+}
+
+type Mutation {
+  changePassword(oldPassword: String!, newPassword: String!): Boolean!
+
+  setCirclePriority(day: Int!, rank: Int!, circleId: Int): UserCirclePriority
+
+  createItem(circleId: Int!, name: String!, price: Int!): Item
+  changeItemName(itemId: Int!, name:String!): Item
+  changeItemPrice(itemId: Int!, price: Int!): Item
+
+  createUser(username: String!, displayName: String!, password: String!): User
+  changeUserPassword(userId: Int!, password: String!): Boolean!
+  changeUserRole(userId: Int!, role: Role!): User
+  changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
+
+  createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
+  changeRequestNum(requestId: Int!, num: Int!): UserRequestItem
+  deleteRequest(id: Int!): Boolean!
+
+  postRequestNote(content: String!): UserRequestNote
+  editRequestNote(id: Int!, content: String!): UserRequestNote
+  deleteRequestNote(id: Int!): Boolean!
+
+  postCircleMemo(circleId: Int!, content: String!): CircleMemo
+  editCircleMemo(id: Int!, content: String!): CircleMemo
+  deleteCircleMemo(id: Int!): Boolean!
+
+  setDeadline(day: Int!, time: Time!): Time!
+}
