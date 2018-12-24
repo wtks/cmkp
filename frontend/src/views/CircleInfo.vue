@@ -73,6 +73,7 @@ const createCircleMemo = gql`
   mutation ($cid: Int!, $content: String!) {
     postCircleMemo(circleId: $cid, content: $content) {
       id
+      userId
       user {
         displayName
       }

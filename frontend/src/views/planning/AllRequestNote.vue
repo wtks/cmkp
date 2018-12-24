@@ -4,7 +4,7 @@
       v-flex(xs12 v-for="note in notes" :key="note.id")
         v-card
           v-card-text
-            span.caption {{ note.user.displayName }} - {{ note.updatedAt }}
+            span.caption {{ note.user.displayName }} - {{ datetimeString(note.updatedAt) }}
             br
             span.body-1(style="white-space: pre-wrap;word-wrap: break-word;" v-text="note.content" v-linkified)
 
@@ -12,6 +12,7 @@
 
 <script>
 import gql from 'graphql-tag'
+import dayjs from 'dayjs'
 
 const getRequestNotes = gql`
   query {
@@ -40,6 +41,11 @@ export default {
       query: getRequestNotes,
       fetchPolicy: 'cache-and-network',
       update: data => data.requestNotes
+    }
+  },
+  methods: {
+    datetimeString: function (dt) {
+      return dayjs(dt).fromNow()
     }
   }
 }

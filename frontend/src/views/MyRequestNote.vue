@@ -14,13 +14,14 @@
       v-flex(xs12 v-else v-for="note in notes" :key="note.id")
         v-card
           v-card-text
-            span.caption {{ note.updatedAt }}
+            span.caption {{ datetimeString(note.updatedAt) }}
             br
             span.body-1(style="white-space: pre-wrap;word-wrap: break-word;" v-text="note.content" v-linkified)
 </template>
 
 <script>
 import gql from 'graphql-tag'
+import dayjs from 'dayjs'
 
 const getMyRequestNotes = gql`
   query {
@@ -62,6 +63,9 @@ export default {
     }
   },
   methods: {
+    datetimeString: function (dt) {
+      return dayjs(dt).fromNow()
+    },
     sendNote: async function () {
       this.sending = true
       try {

@@ -77,7 +77,7 @@ export default {
   },
   methods: {
     formatDatetime (dt) {
-      return dayjs(dt).format()
+      return dayjs(dt).format('YYYY/MM/DD HH:mm:ss')
     }
   }
 }
