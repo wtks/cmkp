@@ -1,17 +1,17 @@
 <template lang="pug">
   v-container(fluid v-scroll="onScroll")
-    v-text-field(:disabled="loading" :loading="loading" append-icon="search" v-model="query" placeholder="サークル名または作家名を入力" @click:append="getCircles" @keypress.enter="getCircles")
+    v-text-field(:disabled="$apollo.queries.circles.loading" :loading="$apollo.queries.circles.loading" append-icon="search" v-model="query" placeholder="サークル名または作家名を入力")
     v-layout(row wrap)
-      v-checkbox(label="1日目" v-model="filters.day1")
-      v-checkbox(label="2日目" v-model="filters.day2")
-      v-checkbox(label="3日目" v-model="filters.day3")
-      v-checkbox(label="企業" v-model="filters.enterprise")
+      v-checkbox(label="1日目" :value="1" v-model="filterDays")
+      v-checkbox(label="2日目" :value="2" v-model="filterDays")
+      v-checkbox(label="3日目" :value="3" v-model="filterDays")
+      v-checkbox(label="企業"  :value="0" v-model="filterDays")
     v-container(fluid grid-list-md)
-      v-data-iterator(:items="circles" :loading="loading" content-tag="v-layout" row wrap hide-actions)
+      v-data-iterator(:items="circles" :loading="$apollo.queries.circles.loading" content-tag="v-layout" row wrap hide-actions)
         v-flex(slot="item" slot-scope="props" xs12 sm6 md4 lg3)
-          v-card(:to="'/circles/'+props.item.id" :class="[{'blue': props.item.day === 1}, {'teal': props.item.day === 2}, {'lime': props.item.day === 3}, {'orange': props.item.day === 0}, 'lighten-5']")
+          v-card.lighten-5(:to="`/circles/${props.item.id}`" :class="[{'blue': props.item.day === 1}, {'teal': props.item.day === 2}, {'lime': props.item.day === 3}, {'orange': props.item.day === 0}]")
             v-card-text
-              div.caption {{ getCircleLoc(props.item) }}
+              div.caption {{ props.item.locationString }}
               div {{ props.item.name }} - {{ props.item.author }}
         p(slot="no-data") 見つかりませんでした
     v-fade-transition
@@ -21,70 +21,46 @@
 </template>
 
 <script>
-import api from '../api'
+import gql from 'graphql-tag'
+
+const searchgql = gql`
+  query ($q: String!, $days: [Int!]) {
+    circles(q: $q, days: $days) {
+      id
+      day
+      name
+      author
+      locationString(day: true)
+    }
+  }
+`
 
 export default {
   name: 'SearchCircle',
   data: function () {
     return {
       offsetTop: 0,
-      loading: false,
       query: '',
-      circles: [],
-      filters: {
-        day1: true,
-        day2: true,
-        day3: true,
-        enterprise: true
-      }
+      filterDays: [0, 1, 2, 3],
+      circles: []
     }
   },
-  watch: {
-    'filters.day1': function () {
-      this.getCircles()
-    },
-    'filters.day2': function () {
-      this.getCircles()
-    },
-    'filters.day3': function () {
-      this.getCircles()
-    },
-    'filters.enterprise': function () {
-      this.getCircles()
-    }
-  },
-  computed: {
-    days: function () {
-      const res = []
-      if (this.filters.enterprise) {
-        res.push(0)
-      }
-      if (this.filters.day1) {
-        res.push(1)
-      }
-      if (this.filters.day2) {
-        res.push(2)
-      }
-      if (this.filters.day3) {
-        res.push(3)
-      }
-      return res
+  apollo: {
+    circles: {
+      query: searchgql,
+      debounce: 1000,
+      variables: function () {
+        return {
+          q: this.query,
+          days: this.filterDays
+        }
+      },
+      skip: function () { return this.query === '' },
+      update: data => data.circles
     }
   },
   methods: {
-    getCircles: async function () {
-      this.loading = true
-      this.circles = await api.searchCircles(this.query, this.days)
-      this.loading = false
-    },
-    getCircleLoc: function (circle) {
-      if (circle.day === 0) {
-        return '企業 ' + circle.hall + circle.space
-      } else {
-        return circle.day + '日目 ' + circle.hall + circle.block + circle.space
-      }
-    },
-    onScroll (e) {
+    onScroll () {
       this.offsetTop = window.pageYOffset || document.documentElement.scrollTop
     }
   }

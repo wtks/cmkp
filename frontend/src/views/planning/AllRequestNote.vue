@@ -1,42 +1,45 @@
 <template lang="pug">
   v-container(fluid grid-list-md)
     v-layout(column)
-      v-flex(xs12 v-for="noteId in notes" :key="noteId")
+      v-flex(xs12 v-for="note in notes" :key="note.id")
         v-card
           v-card-text
-            request-note(:id="noteId")
+            span.caption {{ note.user.displayName }} - {{ note.updatedAt }}
+            br
+            span.body-1(style="white-space: pre-wrap;word-wrap: break-word;" v-text="note.content" v-linkified)
 
 </template>
 
 <script>
-import api from '../../api'
-import RequestNote from '../../components/RequestNote'
+import gql from 'graphql-tag'
+
+const getRequestNotes = gql`
+  query {
+    requestNotes {
+      id
+      user {
+        id
+        displayName
+      }
+      content
+      createdAt
+      updatedAt
+    }
+  }
+`
 
 export default {
   name: 'AllRequestNote',
-  components: {
-    RequestNote
-  },
   data: function () {
     return {
       notes: []
     }
   },
-  mounted: async function () {
-    await this.reload()
-  },
-  methods: {
-    reload: async function () {
-      try {
-        this.notes = await api.getAllRequestNotes()
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
-      }
+  apollo: {
+    notes: {
+      query: getRequestNotes,
+      fetchPolicy: 'cache-and-network',
+      update: data => data.requestNotes
     }
   }
 }

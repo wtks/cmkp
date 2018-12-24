@@ -3,11 +3,20 @@
     v-list
       v-list-tile(v-for="user in users" :key="user.id" :to="user.id.toString()" append)
         v-list-tile-content
-          v-list-tile-title {{ user.display_name }}
+          v-list-tile-title {{ user.displayName }}
 </template>
 
 <script>
-import api from '../../api'
+import gql from 'graphql-tag'
+
+const getUsers = gql`
+  query {
+    users {
+      id
+      displayName
+    }
+  }
+`
 
 export default {
   name: 'Users',
@@ -16,21 +25,11 @@ export default {
       users: []
     }
   },
-  mounted: async function () {
-    await this.reload()
-  },
-  methods: {
-    reload: async function () {
-      try {
-        this.users = await api.getUsers()
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
-      }
+  apollo: {
+    users: {
+      query: getUsers,
+      fetchPolicy: 'cache-and-network',
+      update: data => data.users
     }
   }
 }

@@ -6,22 +6,20 @@
         v-list-tile-content
           v-list-tile-title
             | {{ i }}.&nbsp;
-            router-link(v-if="ids.length > i-1" :to="'/circles/'+ids[i-1]" exact)
-              circle-name(:id="ids[i-1]")
+            router-link(v-if="circles[i-1] !== null" :to="`/circles/${circles[i-1].id}`" exact)
+              span {{ circles[i-1].name }}
 </template>
 
 <script>
-import CircleName from './label/CircleName'
 
 export default {
   name: 'CirclePriorityList',
-  components: {CircleName},
   props: {
     title: {
       type: String,
       default: ''
     },
-    ids: {
+    circles: {
       type: Array,
       required: true
     }

@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import moment from 'moment'
+import dayjs from 'dayjs'
 
 export default {
   name: 'DateTimePicker',
@@ -39,7 +39,7 @@ export default {
         this.date = ''
         this.time = ''
       } else {
-        const v = moment(this.value)
+        const v = dayjs(this.value)
         this.date = v.format('YYYY-MM-DD')
         this.time = v.format('HH:mm')
       }
@@ -48,7 +48,7 @@ export default {
   methods: {
     updateValue: function () {
       if (this.date != null && this.time != null) {
-        this.$emit('input', `${this.date}T${this.time}`)
+        this.$emit('input', `${this.date}T${this.time}:00+09:00`)
       }
     }
   }

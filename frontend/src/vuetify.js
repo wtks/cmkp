@@ -19,6 +19,7 @@ import {
   VNavigationDrawer,
   VRadioGroup,
   VSelect,
+  VSpeedDial,
   VSubheader,
   VTextarea,
   VTextField,
@@ -54,6 +55,7 @@ Vue.use(Vuetify, {
     VDatePicker,
     VSubheader,
     VAutocomplete,
+    VSpeedDial,
     transitions
   },
   directives: {

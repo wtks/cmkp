@@ -1,0 +1,5 @@
+mutation ($userId: Int, $itemId: Int!, $num: Int!) {
+  createRequest(userId: $userId, itemId: $itemId, num: $num) {
+    id
+  }
+}

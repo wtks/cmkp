@@ -1,0 +1,6 @@
+mutation ($id: Int!, $price: Int!) {
+  changeItemPrice (itemId: $id, price: $price) {
+    id
+    price
+  }
+}

@@ -17,8 +17,14 @@
 </template>
 
 <script>
-import api from '../api'
-import moment from 'moment'
+import gql from 'graphql-tag'
+import dayjs from 'dayjs'
+
+const deleteCircleMemo = gql`
+  mutation ($id: Int!) {
+    deleteCircleMemo(id: $id)
+  }
+`
 
 export default {
   name: 'CircleMemo',
@@ -29,62 +35,57 @@ export default {
       sending: false
     }
   },
-  asyncComputed: {
-    username: async function () {
-      if (this.memo == null) {
-        return '読み込み中'
-      }
-      return (await api.getUser(this.memo.user_id)).display_name
-    }
-  },
-  computed: {
-    datetimeString: function () {
-      if (this.memo == null) return ''
-      return moment(this.memo.created_at).fromNow()
-    },
-    isMine: function () {
-      if (this.memo == null) return false
-      return this.$store.state.user.id === this.memo.user_id
-    },
-    content: function () {
-      if (this.memo == null) return '読み込み中'
-      return this.memo.content
-    }
-  },
   props: {
     id: {
       type: Number,
       required: true
+    },
+    user: {
+      type: Object,
+      required: true
+    },
+    userId: {
+      type: Number,
+      required: true
+    },
+    content: {
+      type: String,
+      required: true
+    },
+    createdAt: {
+      type: String,
+      required: true
+    },
+    updatedAt: {
+      type: String,
+      required: true
     }
   },
-  created: async function () {
-    await this.reloadMemo()
-  },
-  watch: {
-    id: async function () {
-      await this.reloadMemo()
+  computed: {
+    datetimeString: function () {
+      return dayjs(this.updatedAt).fromNow()
+    },
+    isMine: function () {
+      return this.$store.state.userId === this.userId
+    },
+    username: function () {
+      return this.user.displayName
     }
   },
   methods: {
-    reloadMemo: async function () {
-      try {
-        this.memo = await api.getCircleMemo(this.id)
-      } catch (e) {
-        console.error(e)
-      }
-    },
     deleteMemo: async function () {
       this.sending = true
       try {
-        await api.deleteCircleMemo(this.id)
+        await this.$apollo.mutate({
+          mutation: deleteCircleMemo,
+          variables: {
+            id: this.id
+          }
+        })
         this.$emit('deleted', this.id)
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
       this.sending = false
       this.deleteDialog = false

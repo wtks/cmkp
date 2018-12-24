@@ -6,7 +6,7 @@
           v-card-title.headline リクエスト締め切り設定
           v-card-text
             span 企業
-            date-time-picker(v-model="deadlines.enterprise" @input="updateDeadline(0, $event)")
+            date-time-picker(v-model="deadlines.day0" @input="updateDeadline(0, $event)")
             span 1日目
             date-time-picker(v-model="deadlines.day1" @input="updateDeadline(1, $event)")
             span 2日目
@@ -17,8 +17,15 @@
 </template>
 
 <script>
-import api from '../../api'
+import getDeadlines from '../../gql/getDeadlines.gql'
 import DateTimePicker from '../../components/DateTimePicker'
+import gql from 'graphql-tag'
+
+const setDeadline = gql`
+  mutation ($day: Int!, $time: Time!) {
+    setDeadline(day: $day, time: $time)
+  }
+`
 
 export default {
   name: 'Config',
@@ -28,44 +35,38 @@ export default {
   data: function () {
     return {
       deadlines: {
-        enterprise: null,
+        day0: null,
         day1: null,
         day2: null,
         day3: null
       }
     }
   },
-  mounted: async function () {
-    await this.reloadDeadlines()
+  apollo: {
+    deadlines: {
+      query: getDeadlines,
+      fetchPolicy: 'network-only',
+      update: data => data
+    }
   },
   methods: {
-    reloadDeadlines: async function () {
-      try {
-        const data = await api.getDeadlines()
-        this.deadlines.enterprise = data.enterprise
-        this.deadlines.day1 = data.day1
-        this.deadlines.day2 = data.day2
-        this.deadlines.day3 = data.day3
-        this.$store.commit('setDeadlines', data)
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
-      }
-    },
     updateDeadline: async function (i, time) {
       try {
-        await api.setDeadline(i, time)
+        await this.$apollo.mutate({
+          mutation: setDeadline,
+          variables: {
+            day: i,
+            time: time
+          },
+          update: (store, { data: { setDeadline } }) => {
+            const data = store.readQuery({ query: getDeadlines })
+            data['day' + i] = setDeadline
+            store.writeQuery({ query: getDeadlines, data })
+          }
+        })
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
     }
   }

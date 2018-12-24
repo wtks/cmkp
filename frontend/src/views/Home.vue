@@ -17,38 +17,68 @@
         v-card
           v-card-title 参加予定日
           v-card-text
-            v-chip(v-if="entryDay1" color="primary" text-color="white" small) 1日目
-            v-chip(v-if="entryDay2" color="primary" text-color="white" small) 2日目
-            v-chip(v-if="entryDay3" color="primary" text-color="white" small) 3日目
+            template(v-if="$apollo.queries.fetchData.loading")
+              span ロード中...
+            template(v-else)
+              v-chip(v-for="day in fetchData.me.entryDays" :key="day" color="primary" text-color="white" small) {{ day }}日目
       v-flex
         v-card
           v-card-title リクエスト受付締め切り日時
           v-card-text
-            span 企業: {{ enterpriseDeadline.format('MM/DD HH:mm') }}
-            br
-            span 1日目: {{ day1Deadline.format('MM/DD HH:mm') }}
-            br
-            span 2日目: {{ day2Deadline.format('MM/DD HH:mm') }}
-            br
-            span 3日目: {{ day3Deadline.format('MM/DD HH:mm') }}
+            template(v-if="$apollo.queries.fetchData.loading")
+              span ロード中...
+            template(v-else)
+              span 企業: {{ formatDatetime(fetchData.day0) }}
+              br
+              span 1日目: {{ formatDatetime(fetchData.day1) }}
+              br
+              span 2日目: {{ formatDatetime(fetchData.day2) }}
+              br
+              span 3日目: {{ formatDatetime(fetchData.day3) }}
 
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import gql from 'graphql-tag'
+import dayjs from 'dayjs'
+
+const getMe = gql`
+  query {
+    me {
+      entryDays
+    }
+    day0: deadline(day: 0)
+    day1: deadline(day: 1)
+    day2: deadline(day: 2)
+    day3: deadline(day: 3)
+  }
+`
 
 export default {
   name: 'home',
-  computed: {
-    ...mapGetters([
-      'enterpriseDeadline',
-      'day1Deadline',
-      'day2Deadline',
-      'day3Deadline',
-      'entryDay1',
-      'entryDay2',
-      'entryDay3'
-    ])
+  data: function () {
+    return {
+      fetchData: {
+        me: {
+          entryDays: []
+        },
+        day0: null,
+        day1: null,
+        day2: null,
+        day3: null
+      }
+    }
+  },
+  apollo: {
+    fetchData: {
+      query: getMe,
+      update: data => data
+    }
+  },
+  methods: {
+    formatDatetime (dt) {
+      return dayjs(dt).format()
+    }
   }
 }
 </script>

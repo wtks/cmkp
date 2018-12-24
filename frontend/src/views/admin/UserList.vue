@@ -13,13 +13,11 @@
         v-flex(xs12 sm6 md4 lg3)
           v-card
             v-card-title
-              span.headline {{ user.display_name }} (@{{ user.name }})
+              span.headline {{ user.displayName }} (@{{ user.name }})
             v-card-text
-              v-chip(v-if="user.permission === 1" color="green" text-color="white" small) プランナー
-              v-chip(v-else-if="user.permission === 2" color="red" text-color="white" small) 管理人
-              v-chip(v-if="user.entry_day1" color="primary" text-color="white" small) 1日目
-              v-chip(v-if="user.entry_day2" color="primary" text-color="white" small) 2日目
-              v-chip(v-if="user.entry_day3" color="primary" text-color="white" small) 3日目
+              v-chip(v-if="user.role === 'PLANNER'" color="green" text-color="white" small) プランナー
+              v-chip(v-else-if="user.role === 'ADMIN'" color="red" text-color="white" small) 管理人
+              v-chip(v-for="day in user.entryDays" :key="day" color="primary" text-color="white" small) {{ day }}日目
             v-card-actions
               v-btn(depressed small @click.stop="openEditEntryDialog(user)") 参加日程修正
               v-btn(depressed small @click.stop="openChangePasswordDialog(user)") パスワード変更
@@ -30,7 +28,7 @@
       v-card
         v-card-title.headline 参加日程修正
         v-card-text
-          p {{ editUser && editUser.display_name }}
+          p {{ editUser && editUser.displayName }}
           v-layout(row wrap)
             v-checkbox(v-model="editEntries" :value="1" label="1日目")
             v-checkbox(v-model="editEntries" :value="2" label="2日目")
@@ -43,7 +41,7 @@
       v-card
         v-card-title.headline パスワード変更
         v-card-text
-          p {{ editUser && editUser.display_name }}
+          p {{ editUser && editUser.displayName }}
           v-form(v-model="valid" ref="passwordForm")
             v-text-field(v-model="newPassword" :append-icon="visiblePassword ? 'visibility_off' : 'visibility'" :type="visiblePassword ? 'text' : 'password'" label="新しいパスワード" :rules="[rules.password]" @click:append="visiblePassword = !visiblePassword")
         v-card-actions
@@ -54,8 +52,8 @@
       v-card
         v-card-title.headline 権限変更
         v-card-text
-          p {{ editUser && editUser.display_name }}
-          v-select(v-model="newPermission" :items="permissions")
+          p {{ editUser && editUser.displayName }}
+          v-select(v-model="newRole" :items="roles")
         v-card-actions
           v-spacer
           v-btn(flat @click.native="changePermissionDialog = false") キャンセル
@@ -64,7 +62,43 @@
 </template>
 
 <script>
-import api from '../../api'
+import gql from 'graphql-tag'
+
+const getDatas = gql`
+  query {
+    users {
+      id
+      name
+      displayName
+      role
+      entryDays
+    }
+  }
+`
+
+const changePassword = gql`
+  mutation ($id: Int!, $password: String!) {
+    changeUserPassword (userId: $id, password: $password)
+  }
+`
+
+const changeRole = gql`
+  mutation ($id: Int!, $role: Role!) {
+    changeUserRole(userId: $id, role: $role) {
+      id
+      role
+    }
+  }
+`
+
+const changeEntry = gql`
+  mutation ($id: Int!, $entries: [Int!]!) {
+    changeUserEntries(userId: $id, entries: $entries) {
+      id
+      entryDays
+    }
+  }
+`
 
 export default {
   name: 'UserList',
@@ -81,120 +115,114 @@ export default {
       editUser: null,
       editEntries: [],
       newPassword: '',
-      newPermission: 0,
+      newRole: 'USER',
       rules: {
         password: value => /^[a-zA-Z0-9!#$%&()*+,.:;=?@[\]^_{}-]+$/.test(value) || 'パスワードは半角英数文字と記号のみ使えます'
       },
-      permissions: [
-        {text: 'メンバー', value: 0},
-        {text: 'プランナー', value: 1},
-        {text: '管理人', value: 2}
+      roles: [
+        { text: 'メンバー', value: 'USER' },
+        { text: 'プランナー', value: 'PLANNER' },
+        { text: '管理人', value: 'ADMIN' }
       ]
+    }
+  },
+  apollo: {
+    users: {
+      query: getDatas,
+      fetchPolicy: 'cache-and-network',
+      update: data => data.users
     }
   },
   computed: {
     filteredUsers: function () {
-      return this.users.filter((v, i, a) => {
-        switch (this.filterDay) {
-          case 1:
-            return v.entry_day1
-          case 2:
-            return v.entry_day2
-          case 3:
-            return v.entry_day3
-          default:
-            return true
-        }
-      })
+      return this.users.filter(v => this.filterDay ? v.entryDays.includes(this.filterDay) : true)
     }
   },
-  mounted: async function () {
-    await this.updateUserList()
-  },
   methods: {
-    updateUserList: async function () {
-      try {
-        this.users = await api.getUsers()
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
-      }
-    },
     editEntry: async function () {
       this.sending = true
       try {
-        await api.editUserEntries(this.editUser.id, this.editEntries)
+        await this.$apollo.mutate({
+          mutation: changeEntry,
+          variables: {
+            id: this.editUser.id,
+            entries: this.editEntries
+          },
+          update: (store, { data: { changeEntry } }) => {
+            const data = store.readQuery({ query: getDatas })
+            data.users.forEach(v => {
+              if (v.id === changeEntry.id) {
+                v.entryDays = changeEntry.entryDays
+              }
+            })
+            store.writeQuery({ query: getDatas, data })
+          }
+        })
         this.editEntryDialog = false
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
-      await this.updateUserList()
       this.sending = false
     },
     changePassword: async function () {
       this.sending = true
       try {
-        await api.changeUserPassword(this.editUser.id, this.newPassword)
+        await this.$apollo.mutate({
+          mutation: changePassword,
+          variables: {
+            id: this.editUser.id,
+            password: this.newPassword
+          }
+        })
         this.changePasswordDialog = false
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
       this.sending = false
     },
     changePermission: async function () {
       this.sending = true
       try {
-        await api.changeUserPermission(this.editUser.id, this.newPermission)
+        this.$apollo.mutate({
+          mutation: changeRole,
+          variables: {
+            id: this.editUser.id,
+            role: this.newRole
+          },
+          update: (store, { data: { changeUserRole } }) => {
+            const data = store.readQuery({ query: getDatas })
+            data.users.forEach(v => {
+              if (v.id === changeUserRole.id) {
+                v.role = changeUserRole.role
+              }
+            })
+            store.writeQuery({ query: getDatas, data })
+          }
+        })
         this.changePermissionDialog = false
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
       this.sending = false
     },
-    openEditEntryDialog: function (user) {
+    openEditEntryDialog (user) {
       this.editUser = user
-      const days = []
-      if (user.entry_day1) {
-        days.push(1)
-      }
-      if (user.entry_day2) {
-        days.push(2)
-      }
-      if (user.entry_day3) {
-        days.push(3)
-      }
-      this.editEntries = days
+      this.editEntries = [...user.entryDays]
       this.editEntryDialog = true
     },
-    openChangePasswordDialog: function (user) {
+    openChangePasswordDialog (user) {
       this.editUser = user
       this.newPassword = ''
       this.valid = false
       this.$refs.passwordForm.reset()
       this.changePasswordDialog = true
     },
-    openChangePermissionDialog: function (user) {
+    openChangePermissionDialog (user) {
       this.editUser = user
-      this.newPermission = user.permission
+      this.newRole = user.role
       this.changePermissionDialog = true
     }
   }

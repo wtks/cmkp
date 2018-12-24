@@ -16,36 +16,66 @@
         v-checkbox(label="シャッター" v-model="filter.shutter")
 
     v-layout(row wrap)
-      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.circle_id")
-        planner-request-circle-item-list(v-bind="circle" @itemClick="onItemClicked")
-    v-dialog(v-model="itemDetail.dialog" width=500)
-      planner-request-circle-item-detail(v-if="itemDetailValid" v-bind="itemDetail")
-
+      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id")
+        v-card
+          v-card-title.headline.lighten-4(:class="[{'orange': circle.locationType === 1}, {'red': circle.locationType === 2}, {'green': circle.locationType === 0}]")
+            router-link(:to="`/circles/${circle.id}`" style="text-decoration: none;") {{ circle.locationString }} {{ circle.name }}
+          v-card-text.blue-grey.lighten-5(v-if="circle.prioritized.length > 0")
+            div(v-for="p in circle.prioritized" :key="p.userId") 第{{p.rank}}希望：{{ p.user.displayName }}
+          v-divider
+          v-list(three-line)
+            v-list-tile(v-for="item in circle.requestedItems" :key="item.id")
+              v-list-tile-content
+                v-list-tile-title {{ item.name }}
+                v-list-tile-sub-title {{ priceString(item.price) }} × 計{{ requestedNum(item.requests) }}個
+                v-list-tile-sub-title
+                  span(v-for="(request, idx) in item.requests" :key="request.id")
+                    span {{ request.user.displayName }}({{ request.num }})
+                    template(v-if="idx !== item.requests.length - 1") ,&nbsp;
 </template>
 
 <script>
-import api from '../../api'
-import PlannerRequestCircleItemList from '../../components/PlannerRequestCircleItemList'
-import PlannerRequestCircleItemDetail from '../../components/PlannerRequestCircleItemDetail'
+import gql from 'graphql-tag'
+
+const getData = gql`
+  query {
+    requestedCircles {
+      id
+      name
+      author
+      day
+      locationString
+      locationType
+      prioritized {
+        userId
+        user {
+          displayName
+        }
+        rank
+      }
+      requestedItems {
+        id
+        name
+        price
+        requests {
+          id
+          userId
+          user {
+            displayName
+          }
+          num
+        }
+      }
+    }
+  }
+`
 
 export default {
   name: 'AllRequestList',
-  components: {
-    PlannerRequestCircleItemList,
-    PlannerRequestCircleItemDetail
-  },
   data: function () {
     return {
-      requests: [],
-      circleMap: new Map(),
-      itemMap: new Map(),
-      requestMap: new Map(),
-      itemDetail: {
-        dialog: false,
-        circleId: null,
-        circle: null,
-        itemId: null,
-        item: null
+      fetchData: {
+        requestedCircles: []
       },
       filter: {
         day: 1,
@@ -55,15 +85,22 @@ export default {
       }
     }
   },
+  apollo: {
+    fetchData: {
+      query: getData,
+      fetchPolicy: 'cache-and-network',
+      update: data => data
+    }
+  },
   computed: {
     filteredRequests: function () {
-      return this.requests.filter(v => {
+      return this.fetchData.requestedCircles.filter(v => {
         let ok = true
         if (this.filter.day != null) {
-          ok = v.circle.day === this.filter.day
+          ok = v.day === this.filter.day
         }
         if (!ok) return false
-        switch (v.circle.location_type) {
+        switch (v.locationType) {
           case 0:
             ok = this.filter.normal
             break
@@ -81,57 +118,22 @@ export default {
       return this.filteredRequests.length
     },
     filteredRequestedWallCircleCount: function () {
-      return this.filteredRequests.reduce((x, y) => x + (y.circle.location_type === 1 ? 1 : 0), 0)
+      return this.filteredRequests.reduce((x, y) => x + (y.locationType === 1 ? 1 : 0), 0)
     },
     filteredRequestedShutterCircleCount: function () {
-      return this.filteredRequests.reduce((x, y) => x + (y.circle.location_type === 2 ? 1 : 0), 0)
-    },
-    itemDetailValid: function () {
-      return !!this.itemDetail.circle && !!this.itemDetail.item
+      return this.filteredRequests.reduce((x, y) => x + (y.locationType === 2 ? 1 : 0), 0)
     }
-  },
-  watch: {
-    'itemDetail.circleId': function () {
-      this.itemDetail.circle = this.circleMap.get(this.itemDetail.circleId)
-    },
-    'itemDetail.itemId': function () {
-      this.itemDetail.item = this.itemMap.get(this.itemDetail.itemId)
-    }
-  },
-  mounted: async function () {
-    await this.reloadRequests()
   },
   methods: {
-    reloadRequests: async function () {
-      try {
-        const data = await api.getAllRequests()
-        this.circleMap.clear()
-        this.itemMap.clear()
-        this.requestMap.clear()
-        for (const circle of data) {
-          circle.circle = await api.getCircle(circle.circle_id)
-          this.circleMap.set(circle.circle_id, circle)
-          for (const item of circle.items) {
-            this.itemMap.set(item.id, item)
-            for (const request of item.requests) {
-              this.requestMap.set(request.id, request)
-            }
-          }
-        }
-        this.requests = data
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+    priceString: function (p) {
+      if (p >= 0) {
+        return p + '円'
+      } else {
+        return '価格未定'
       }
     },
-    onItemClicked: function ({circleId, itemId}) {
-      this.itemDetail.circleId = circleId
-      this.itemDetail.itemId = itemId
-      this.itemDetail.dialog = true
+    requestedNum: function (requests) {
+      return requests.reduce((x, y) => x + y.num, 0)
     }
   }
 }

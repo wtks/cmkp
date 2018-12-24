@@ -1,7 +1,8 @@
 module.exports = {
-  outputDir: '../static',
-
   devServer: {
-    proxy: 'http://localhost:3000'
-  }
+    proxy: 'http://localhost:3000',
+    disableHostCheck: true
+  },
+
+  pluginOptions: undefined
 }

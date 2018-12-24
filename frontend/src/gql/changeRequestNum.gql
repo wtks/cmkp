@@ -1,0 +1,6 @@
+mutation ($id: Int!, $num: Int!) {
+  changeRequestNum(requestId: $id, num: $num) {
+    id
+    num
+  }
+}

@@ -10,8 +10,19 @@
         v-btn(color="primary" depressed block :disabled="isSelectedDayDeadlineOver" @click="openEditPriorityDialog") 希望優先順位を設定する
 
     v-layout(row wrap)
-      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.circle_id")
-        request-circle-item-list(v-bind="circle" @itemClick="openEditDialog")
+      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id")
+        v-card
+          v-card-title.headline.lighten-4(:class="[{'orange': circle.locationType === 1}, {'red': circle.locationType === 2}, {'green': circle.locationType === 0}]")
+            router-link(:to="`/circles/${circle.id}`" style="text-decoration: none;") {{ circle.locationString }} {{ circle.name }}
+          v-list
+            v-list-tile(v-for="request in circle.requests" :key="request.id" @click="openEditDialog(request.id)")
+              v-list-tile-content
+                v-list-tile-title {{ request.item.name }}
+                v-list-tile-sub-title {{ request.item.price > -1 ? request.item.price + '円' : '価格未定' }} × {{ request.num }}個
+          v-card-actions
+            p 合計：{{ sumCosts(circle.requests) }}
+            v-spacer
+            v-btn(depressed :to="`/my-requests/create/${circle.id}`" :disabled="isDeadlineOver(circle.day)") 商品追加
 
     v-btn(fixed dark fab bottom right color="blue darken-2" to="/circles")
       v-icon add
@@ -51,27 +62,72 @@
 </template>
 
 <script>
-import api from '../api'
-import RequestCircleItemList from '../components/RequestCircleItemList'
+import gql from 'graphql-tag'
+import dayjs from 'dayjs'
+import updateItemPrice from '../gql/updateItemPrice.gql'
+import editRequest from '../gql/changeRequestNum.gql'
+import deleteRequest from '../gql/deleteRequest.gql'
+
+const getData = gql`
+  query {
+    myRequestedCircles {
+      id
+      name
+      author
+      day
+      locationString
+      locationType
+    }
+    myRequests {
+      id
+      item {
+        id
+        circleId
+        name
+        price
+      }
+      num
+    }
+    priorities0: myCirclePriorityIds(day: 0)
+    priorities1: myCirclePriorityIds(day: 1)
+    priorities2: myCirclePriorityIds(day: 2)
+    priorities3: myCirclePriorityIds(day: 3)
+    day0: deadline(day: 0)
+    day1: deadline(day: 1)
+    day2: deadline(day: 2)
+    day3: deadline(day: 3)
+  }
+`
+
+const updateCirclePriority = gql`
+  mutation ($day: Int!, $circles: [Int!]!) {
+    setCirclePriorities(day: $day, circleIds: $circles) {
+      day
+      priorities
+    }
+  }
+`
 
 export default {
   name: 'MyRequests',
-  components: {
-    RequestCircleItemList
-  },
   data: function () {
     return {
+      fetchData: {
+        myRequestedCircles: [],
+        myRequests: [],
+        priorities0: [],
+        priorities1: [],
+        priorities2: [],
+        priorities3: [],
+        day0: null,
+        day1: null,
+        day2: null,
+        day3: null
+      },
       selectedDay: '１日目',
       daySelectItems: ['企業', '１日目', '２日目', '３日目', '全日'],
-      requests: [],
       requestMap: new Map(),
       requestCircleMap: new Map(),
-      priorityData: {
-        enterprise: [],
-        day1: [],
-        day2: [],
-        day3: []
-      },
       dialog: false,
       priorityDialog: false,
       sending: false,
@@ -90,66 +146,41 @@ export default {
     }
   },
   computed: {
+    requestedCircles: function () {
+      const result = []
+      this.requestCircleMap.clear()
+      this.requestMap.clear()
+      for (const circle of this.fetchData.myRequestedCircles) {
+        const c = Object.assign({}, circle)
+        result.push(c)
+        this.requestCircleMap.set(c.id, c)
+      }
+      for (const req of this.fetchData.myRequests) {
+        this.requestMap.set(req.id, req)
+        const c = this.requestCircleMap.get(req.item.circleId)
+        if (!c.requests) {
+          c.requests = []
+        }
+        c.requests.push(req)
+      }
+      return result
+    },
     numEditable: function () {
       if (this.editTarget == null) {
         return false
       }
-      switch (this.requestCircleMap.get(this.editTarget.item.circle_id).circle.day) {
-        case 0:
-          return !this.$store.getters.isEnterpriseDeadlineOver
-        case 1:
-          return !this.$store.getters.isDay1DeadlineOver
-        case 2:
-          return !this.$store.getters.isDay2DeadlineOver
-        case 3:
-          return !this.$store.getters.isDay3DeadlineOver
-        default:
-          return false
-      }
+      return !this.isDeadlineOver(this.requestCircleMap.get(this.editTarget.item.circleId).day)
     },
     filteredRequests: function () {
       const day = this.selectedDayNum
-      if (day == null) return this.requests
-      const c = this.requests.filter((v, i, a) => v.circle.day === day)
-      let d
-      switch (day) {
-        case 0:
-          if (this.priorityData.enterprise == null) return c
-          d = this.priorityData.enterprise
-          break
-        case 1:
-          if (this.priorityData.day1 == null) return c
-          d = this.priorityData.day1
-          break
-        case 2:
-          if (this.priorityData.day2 == null) return c
-          d = this.priorityData.day2
-          break
-        case 3:
-          if (this.priorityData.day3 == null) return c
-          d = this.priorityData.day3
-          break
-      }
-
-      c.sort((a, b) => {
-        let ap = 5 - d.indexOf(a.circle_id)
-        if (ap > 5) {
-          ap = -1
-        }
-        let bp = 5 - d.indexOf(b.circle_id)
-        if (bp > 5) {
-          bp = -1
-        }
-
-        return bp - ap
-      })
-      return c
+      if (day == null) return this.requestedCircles
+      return this.requestedCircles.filter(v => v.day === day)
     },
     totalCosts: function () {
       let unknown = false
       let costs = 0
       for (const circle of this.filteredRequests) {
-        for (const req of circle.items) {
+        for (const req of circle.requests) {
           if (req.item.price === -1) {
             unknown = true
           } else {
@@ -168,7 +199,7 @@ export default {
       return this.filteredRequests.length
     },
     prioritySelectItems: function () {
-      return this.filteredRequests.map(v => v.circle).filter(v => this.editPriorities.every(w => v.id !== w.id))
+      return this.filteredRequests.filter(v => this.editPriorities.every(w => v.id !== w.id))
     },
     selectedDayNum: function () {
       switch (this.selectedDay) {
@@ -185,22 +216,17 @@ export default {
       }
     },
     isSelectedDayDeadlineOver: function () {
-      switch (this.selectedDayNum) {
-        case 0:
-          return this.$store.getters.isEnterpriseDeadlineOver
-        case 1:
-          return this.$store.getters.isDay1DeadlineOver
-        case 2:
-          return this.$store.getters.isDay2DeadlineOver
-        case 3:
-          return this.$store.getters.isDay3DeadlineOver
-        default:
-          return true
-      }
+      return this.isDeadlineOver(this.selectedDayNum)
+    }
+  },
+  apollo: {
+    fetchData: {
+      query: getData,
+      fetchPolicy: 'cache-and-network',
+      update: data => data
     }
   },
   created: async function () {
-    await this.reloadMyRequests()
     if (this.$route.query.day) {
       switch (this.$route.query.day) {
         case '0':
@@ -219,32 +245,35 @@ export default {
     }
   },
   methods: {
-    reloadMyRequests: async function () {
-      try {
-        const priorities = await api.getMyPriority()
-        this.priorityData.enterprise = priorities.enterprise
-        this.priorityData.day1 = priorities.day1
-        this.priorityData.day2 = priorities.day2
-        this.priorityData.day3 = priorities.day3
-
-        const data = await api.getMyRequests()
-        this.requestCircleMap.clear()
-        this.requestMap.clear()
-        for (const circle of data) {
-          circle.circle = await api.getCircle(circle.circle_id)
-          this.requestCircleMap.set(circle.circle_id, circle)
-          for (const request of circle.items) {
-            this.requestMap.set(request.id, request)
-          }
-        }
-        this.requests = data
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
+    isDeadlineOver: function (day) {
+      switch (day) {
+        case 0:
+          return dayjs(this.fetchData.day0).isBefore(dayjs())
+        case 1:
+          return dayjs(this.fetchData.day1).isBefore(dayjs())
+        case 2:
+          return dayjs(this.fetchData.day2).isBefore(dayjs())
+        case 3:
+          return dayjs(this.fetchData.day3).isBefore(dayjs())
+        default:
+          return true
+      }
+    },
+    sumCosts: function (requests) {
+      let unknown = false
+      let costs = 0
+      for (const req of requests) {
+        if (req.item.price === -1) {
+          unknown = true
         } else {
-          this.$bus.$emit('error')
+          costs += req.item.price * req.num
         }
+      }
+
+      if (unknown) {
+        return `${costs}円 + α`
+      } else {
+        return `${costs}円`
       }
     },
     openEditDialog: function (reqId) {
@@ -261,10 +290,22 @@ export default {
       try {
         const p = this.editPrice === '' ? -1 : this.editPrice
         if (this.editTarget.num !== this.editNum) {
-          await api.editRequest(this.editTarget.id, this.editNum)
+          await this.$apollo.mutate({
+            mutation: editRequest,
+            variables: {
+              id: this.editTarget.id,
+              num: this.editNum
+            }
+          })
         }
         if (this.editTarget.item.price !== p) {
-          await api.patchCircleItemPrice(this.editTarget.item_id, p)
+          await this.$apollo.mutate({
+            mutation: updateItemPrice,
+            variables: {
+              id: this.editTarget.item.id,
+              price: p
+            }
+          })
         }
 
         this.editTarget.num = this.editNum
@@ -272,11 +313,7 @@ export default {
         this.dialog = false
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
       this.editing = false
       this.sending = false
@@ -285,64 +322,55 @@ export default {
       this.sending = true
       this.deleting = true
       try {
-        await api.deleteRequest(this.editTarget.id)
-
-        this.requestMap.delete(this.editTarget.id)
-        for (const circle of this.requests) {
-          if (circle.circle_id === this.editTarget.item.circle_id) {
-            let i = 0
-            while (circle.items[i].id !== this.editTarget.id) i++
-            circle.items.splice(i, 1)
+        await this.$apollo.mutate({
+          mutation: deleteRequest,
+          variables: {
+            id: this.editTarget.id
           }
-        }
+        })
+        const circle = this.requestCircleMap.get(this.editTarget.item.circleId)
+        let i = 0
+        while (circle.requests[i].id !== this.editTarget.id) i++
+        circle.requests.splice(i, 1)
+        this.requestMap.delete(this.editTarget.id)
 
         this.dialog = false
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
       this.deleting = false
       this.sending = false
     },
-    openEditPriorityDialog: async function () {
-      try {
-        let ids
-        switch (this.selectedDayNum) {
-          case 0:
-            ids = this.priorityData.enterprise
-            break
-          case 1:
-            ids = this.priorityData.day1
-            break
-          case 2:
-            ids = this.priorityData.day2
-            break
-          case 3:
-            ids = this.priorityData.day3
-            break
-          default:
-            return
-        }
+    openEditPriorityDialog: function () {
+      let ids
+      switch (this.selectedDayNum) {
+        case 0:
+          ids = this.fetchData.priorities0
+          break
+        case 1:
+          ids = this.fetchData.priorities1
+          break
+        case 2:
+          ids = this.fetchData.priorities2
+          break
+        case 3:
+          ids = this.fetchData.priorities3
+          break
+        default:
+          return
+      }
 
-        this.editPriorities.splice(0)
-        if (ids != null) {
-          for (const id of ids) {
-            this.editPriorities.push(await api.getCircle(id))
+      this.editPriorities.splice(0)
+      if (ids != null) {
+        for (const id of ids) {
+          const c = this.requestCircleMap.get(id)
+          if (c) {
+            this.editPriorities.push(c)
           }
         }
-        this.priorityDialog = true
-      } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
       }
+      this.priorityDialog = true
     },
     appendPriorityCircle: function () {
       if (this.editPrioritySelectCircle == null) return
@@ -355,29 +383,22 @@ export default {
     updatePriority: async function () {
       this.sending = true
       try {
-        await api.setMyPriority(this.selectedDayNum, this.editPriorities.map(v => v.id))
-        switch (this.selectedDayNum) {
-          case 0:
-            this.priorityData.enterprise = this.editPriorities.map(v => v.id)
-            break
-          case 1:
-            this.priorityData.day1 = this.editPriorities.map(v => v.id)
-            break
-          case 2:
-            this.priorityData.day2 = this.editPriorities.map(v => v.id)
-            break
-          case 3:
-            this.priorityData.day3 = this.editPriorities.map(v => v.id)
-            break
-        }
+        await this.$apollo.mutate({
+          mutation: updateCirclePriority,
+          variables: {
+            day: this.selectedDayNum,
+            circles: this.editPriorities.map(v => v.id)
+          },
+          update: (store, { data: { setCirclePriorities } }) => {
+            const data = store.readQuery({ query: getData })
+            data[`priorities${setCirclePriorities.day}`] = setCirclePriorities.priorities
+            store.writeQuery({ query: getData, data })
+          }
+        })
         this.priorityDialog = false
       } catch (e) {
         console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error')
       }
       this.sending = false
     }

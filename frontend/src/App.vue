@@ -6,7 +6,7 @@
           v-list-tile-action
             v-icon person
           v-list-tile-content
-            v-list-tile-title {{ myDisplayName }}
+            v-list-tile-title {{ myName }}
         v-list-tile(@click="passwordDialog.open = true")
           v-list-tile-action
             v-icon vpn_key
@@ -91,13 +91,28 @@
         v-card-actions
           v-spacer
           v-btn(flat @click="passwordDialog.open = false") キャンセル
-          v-btn(flat color="primary" :disabled="!passwordDialog.valid || loading" :loading="loading" @click.native="changePassword") 変更
+          v-btn(flat color="primary" :disabled="!passwordDialog.valid || passwordDialog.loading" :loading="passwordDialog.loading" @click.native="changePassword") 変更
 </template>
 
 <script>
+import gql from 'graphql-tag'
 import api from './api'
 import { mapGetters } from 'vuex'
 import ErrorDialog from './components/ErrorDialog'
+
+const changePassword = gql`
+  mutation ($old: String!, $new: String!) {
+    changePassword(oldPassword: $old, newPassword: $new)
+  }
+`
+
+const getRole = gql`
+  query {
+    me {
+      role
+    }
+  }
+`
 
 export default {
   name: 'App',
@@ -118,7 +133,8 @@ export default {
       rules: {
         password: value => /^[a-zA-Z0-9!#$%&()*+,.:;=?@[\]^_{}-]+$/.test(value) || 'パスワードは半角英数文字と記号のみ使えます',
         confirmPassword: value => this.passwordDialog.newPassword === value || '新しいパスワードを正しく入力してください'
-      }
+      },
+      userRole: null
     }
   },
   computed: {
@@ -143,12 +159,28 @@ export default {
       }
       return false
     },
+    isAdmin: function () {
+      return this.userRole === 'ADMIN'
+    },
+    isPlanner: function () {
+      return this.userRole === 'ADMIN' || this.userRole === 'PLANNER'
+    },
     ...mapGetters([
-      'myDisplayName',
-      'isAdmin',
-      'isPlanner',
+      'myName',
       'loggedIn'
     ])
+  },
+  apollo: {
+    userRole: {
+      query: getRole,
+      fetchPolicy: 'network-only',
+      update: data => data.me ? data.me.role : null
+    }
+  },
+  watch: {
+    userRole: function (v) {
+      this.$store.commit('setRole', v)
+    }
   },
   methods: {
     logout: function () {
@@ -158,17 +190,18 @@ export default {
     changePassword: async function () {
       this.passwordDialog.loading = true
       try {
-        await api.changeMyPassword(this.passwordDialog.oldPassword, this.passwordDialog.newPassword)
+        await this.$apollo.mutate({
+          mutation: changePassword,
+          variables: {
+            old: this.passwordDialog.oldPassword,
+            new: this.passwordDialog.newPassword
+          }
+        })
         this.passwordDialog.oldPassword = ''
         this.passwordDialog.newPassword = ''
         this.passwordDialog.open = false
       } catch (e) {
-        console.error(e)
-        if (e.response) {
-          this.$bus.$emit('error', e.response.data.message)
-        } else {
-          this.$bus.$emit('error')
-        }
+        this.$bus.$emit('error', e.graphQLErrors[0].message)
       } finally {
         this.passwordDialog.loading = false
       }
