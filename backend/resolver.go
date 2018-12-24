@@ -19,6 +19,17 @@ func (r *Resolver) Query() QueryResolver {
 
 type mutationResolver struct{ *Resolver }
 
+func (r *mutationResolver) SetCirclePriorities(ctx context.Context, day int, circleIds []int) (*model.UserCirclePriority, error) {
+	return model.SetUserCirclePriorities(ctx, getUserId(ctx), day, circleIds)
+}
+
+func (r *mutationResolver) ChangeUserEntries(ctx context.Context, userId int, entries []int) (*model.User, error) {
+	if model.IsGranted(ctx, getUserRole(ctx), model.RoleAdmin) {
+		return model.ChangeUserEntries(ctx, userId, entries)
+	}
+	return nil, model.ErrForbidden
+}
+
 func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error) {
 	user, err := model.GetUserByID(ctx, getUserId(ctx))
 	if err != nil {
@@ -26,7 +37,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword strin
 	}
 
 	if !user.CheckPassword(oldPassword) {
-		return false, errors.New("password is wrong")
+		return false, errors.New("パスワードが間違っています")
 	}
 
 	if err := model.ChangeUserPassword(ctx, user.ID, newPassword); err != nil {
@@ -221,6 +232,35 @@ func (r *mutationResolver) DeleteCircleMemo(ctx context.Context, id int) (bool, 
 
 type queryResolver struct{ *Resolver }
 
+func (r *queryResolver) UserRequestedCircles(ctx context.Context, userId int) ([]*model.Circle, error) {
+	if userId == getUserId(ctx) || model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
+		return model.GetRequestedCirclesByUser(ctx, userId)
+	}
+	return nil, model.ErrForbidden
+}
+
+func (r *queryResolver) CirclePriority(ctx context.Context, userId int, day int) (*model.UserCirclePriority, error) {
+	if userId == getUserId(ctx) || model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
+		return model.GetUserCirclePriorityByUserIDAndDay(ctx, userId, day)
+	}
+	return nil, model.ErrForbidden
+}
+
+func (r *queryResolver) MyCirclePriorityIds(ctx context.Context, day int) ([]int, error) {
+	up, err := model.GetUserCirclePriorityByUserIDAndDay(ctx, getUserId(ctx), day)
+	if err != nil {
+		return make([]int, 0), nil
+	}
+
+	res := make([]int, 0)
+	for _, v := range up.Priorities() {
+		if v != nil {
+			res = append(res, *v)
+		}
+	}
+	return res, nil
+}
+
 func (r *queryResolver) Circles(ctx context.Context, q string, days []int) ([]*model.Circle, error) {
 	return model.SearchCircles(ctx, q, days)
 }
@@ -312,7 +352,13 @@ func (r *queryResolver) RequestNote(ctx context.Context, id int) (*model.UserReq
 	return nil, model.ErrForbidden
 }
 
-func (r *queryResolver) RequestNotes(ctx context.Context) ([]*model.UserRequestNote, error) {
+func (r *queryResolver) RequestNotes(ctx context.Context, userId int) ([]*model.UserRequestNote, error) {
+	if userId > 0 {
+		if userId == getUserId(ctx) || model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
+			return model.GetUserRequestNotesByUserID(ctx, userId)
+		}
+		return nil, model.ErrForbidden
+	}
 	if model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
 		return model.GetUserRequestNotes(ctx)
 	}

@@ -71,6 +71,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
+	e.Use(middleware.CORS())
 
 	// routing api
 	e.POST("/api/login", login)
@@ -89,11 +90,8 @@ func main() {
 
 			return errors.New("internal server error")
 		}),
-		handler.RequestMiddleware(func(ctx context.Context, next func(ctx context.Context) []byte) []byte {
-			return next(context.WithValue(context.WithValue(ctx, model.ORMKey, orm), model.LoadersKey, model.CreateLoaders(ctx)))
-		}),
 	)
-	e.Any("/api/graphql",
+	e.POST("/api/graphql",
 		echo.WrapHandler(gql),
 		middleware.JWTWithConfig(middleware.JWTConfig{
 			Claims:     &jwt.StandardClaims{},
@@ -103,11 +101,11 @@ func main() {
 			return func(c echo.Context) error {
 				claim := c.Get("user").(*jwt.Token).Claims.(*jwt.StandardClaims)
 				user := &model.User{}
-				if err := orm.Select("role").First(user, mustParseInt(claim.Subject)).Error; err != nil {
+				if err := orm.Select("id, role").First(user, mustParseInt(claim.Subject)).Error; err != nil {
 					c.Logger().Error(err)
 					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
-				c.SetRequest(c.Request().WithContext(context.WithValue(context.WithValue(c.Request().Context(), "userId", user.ID), "role", model.Role(user.Role))))
+				c.SetRequest(c.Request().WithContext(context.WithValue(context.WithValue(context.WithValue(context.WithValue(c.Request().Context(), "userId", user.ID), "role", model.Role(user.Role)), model.ORMKey, orm), model.LoadersKey, model.CreateLoaders(ctx))))
 				return next(c)
 			}
 		},
@@ -133,14 +131,14 @@ func main() {
 
 func initAdminUser(ctx context.Context) error {
 	u := &model.User{}
-	if err := orm.Where(&model.User{Role: model.RoleAdmin.String()}).Take(u).Error; err != nil {
+	if err := orm.Where(&model.User{Role: model.RoleAdmin}).Take(u).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			hash, _ := bcrypt.GenerateFromPassword([]byte(viper.GetString("INIT_ADMIN_PASSWORD")), bcrypt.DefaultCost)
 			u = &model.User{
 				Name:              "admin",
 				DisplayName:       "管理人",
 				EncryptedPassword: string(hash),
-				Role:              model.RoleAdmin.String(),
+				Role:              model.RoleAdmin,
 			}
 			if err := orm.Create(u).Error; err != nil {
 				return err

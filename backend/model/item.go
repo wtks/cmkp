@@ -63,9 +63,21 @@ func (i *Item) Circle(ctx context.Context) (*Circle, error) {
 func (i *Item) Requests(ctx context.Context) ([]*UserRequestItem, error) {
 	if IsGranted(ctx, getCtxUserRole(ctx), RolePlanner) {
 		return GetUserRequestItemsByItemID(ctx, i.ID)
-	} else {
-		return nil, ErrForbidden
 	}
+	return nil, ErrForbidden
+}
+
+func (i *Item) MyRequest(ctx context.Context) (*UserRequestItem, error) {
+	r, _ := GetUserRequestItemByItemAndUserID(ctx, i.ID, getCtxUserId(ctx))
+	return r, nil
+}
+
+func (i *Item) UserRequest(ctx context.Context, userId int) (*UserRequestItem, error) {
+	if userId == getCtxUserId(ctx) || IsGranted(ctx, getCtxUserRole(ctx), RolePlanner) {
+		r, _ := GetUserRequestItemByItemAndUserID(ctx, i.ID, userId)
+		return r, nil
+	}
+	return nil, ErrForbidden
 }
 
 func GetItemByID(ctx context.Context, id int) (*Item, error) {
@@ -103,6 +115,42 @@ func GetItemsByCircleID(ctx context.Context, circleID int) ([]*Item, error) {
 
 	arr := make([]*Item, 0)
 	if err := orm(ctx).Find(&arr, cond).Error; err != nil {
+		panic(err)
+	}
+	return arr, nil
+}
+
+func GetRequestedItemsByCircleID(ctx context.Context, circleID int, userID *int) ([]*Item, error) {
+	if circleID <= 0 {
+		return make([]*Item, 0), nil
+	}
+
+	query := orm(ctx).
+		Model(Item{}).
+		Where(&Item{CircleID: circleID})
+	if userID == nil {
+		query = query.Joins("INNER JOIN (SELECT item_id as id FROM user_request_items GROUP BY item_id) t ON t.id = items.id")
+	} else {
+		query = query.Joins("INNER JOIN (SELECT item_id as id FROM user_request_items WHERE user_request_items.user_id = ? GROUP BY item_id) t ON t.id = items.id", *userID)
+	}
+
+	if loader, ok := getItemLoader(ctx); ok {
+		ids := make([]int, 0)
+		if err := query.Pluck("items.id", &ids).Error; err != nil {
+			panic(err)
+		}
+
+		arr, errs := loader.LoadAll(ids)
+		for _, v := range errs {
+			if v != nil {
+				return nil, v
+			}
+		}
+		return arr, nil
+	}
+
+	arr := make([]*Item, 0)
+	if err := query.Find(&arr).Error; err != nil {
 		panic(err)
 	}
 	return arr, nil

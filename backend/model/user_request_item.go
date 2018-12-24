@@ -79,6 +79,31 @@ func GetUserRequestItemByID(ctx context.Context, id int) (*UserRequestItem, erro
 	return &v, nil
 }
 
+func GetUserRequestItemByItemAndUserID(ctx context.Context, itemID, userID int) (*UserRequestItem, error) {
+	query := orm(ctx).
+		Model(UserRequestItem{}).
+		Where(&UserRequestItem{ItemID: itemID, UserID: userID})
+
+	if loader, ok := getUserRequestItemLoader(ctx); ok {
+		ids := make([]int, 0)
+		if err := query.Pluck("id", &ids).Error; err != nil {
+			panic(err)
+		}
+
+		if len(ids) != 1 {
+			return nil, gorm.ErrRecordNotFound
+		}
+
+		return loader.Load(ids[0])
+	}
+
+	v := UserRequestItem{}
+	if err := query.First(&v).Error; err != nil {
+		return nil, panicUnlessNotFound(err)
+	}
+	return &v, nil
+}
+
 func GetUserRequestItemsByItemID(ctx context.Context, itemID int) ([]*UserRequestItem, error) {
 	cond := &UserRequestItem{ItemID: itemID}
 	if loader, ok := getUserRequestItemLoader(ctx); ok {
@@ -132,16 +157,22 @@ func CreateUserRequestItem(ctx context.Context, userID, itemID, num int) (*UserR
 		return nil, err
 	}
 
-	ur := &UserRequestItem{
-		UserID: userID,
-		ItemID: itemID,
-		Num:    num,
+	ur := UserRequestItem{}
+	if err := orm(ctx).Where(&UserRequestItem{ItemID: itemID, UserID: userID}).First(&ur).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			panic(err)
+		}
 	}
-	if err := orm(ctx).Create(&ur).Error; err != nil {
+
+	ur.UserID = userID
+	ur.ItemID = itemID
+	ur.Num = num
+
+	if err := orm(ctx).Save(&ur).Error; err != nil {
 		return nil, err
 	}
 
-	return ur, nil
+	return &ur, nil
 }
 
 func ChangeUserRequestItemNum(ctx context.Context, id int, num int) (*UserRequestItem, error) {

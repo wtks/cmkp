@@ -53,7 +53,7 @@ type User struct {
 	Name              string `gorm:"type:varchar(20);unique"`
 	DisplayName       string `gorm:"type:varchar(30)"`
 	EncryptedPassword string `gorm:"type:text"`
-	Role              string
+	Role              Role   `gorm:"type:varchar(10)"`
 	EntryDay1         bool
 	EntryDay2         bool
 	EntryDay3         bool
@@ -207,7 +207,7 @@ func CreateUser(ctx context.Context, name, displayName, password string) (*User,
 		Name:              name,
 		DisplayName:       displayName,
 		EncryptedPassword: hash,
-		Role:              RoleUser.String(),
+		Role:              RoleUser,
 	}
 	if err := orm(ctx).Create(u).Error; err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func ChangeUserPassword(ctx context.Context, userID int, password string) error 
 		return err
 	}
 
-	if err := orm(ctx).Where(&User{ID: userID}).Updates(&User{EncryptedPassword: hash}).Error; err != nil {
+	if err := orm(ctx).Model(User{}).Where(&User{ID: userID}).Updates(&User{EncryptedPassword: hash}).Error; err != nil {
 		return err
 	}
 	return nil
@@ -237,7 +237,7 @@ func ChangeUserRole(ctx context.Context, userID int, role Role) (*User, error) {
 		return nil, panicUnlessNotFound(err)
 	}
 
-	user.Role = role.String()
+	user.Role = role
 	if err := orm(ctx).Save(&user).Error; err != nil {
 		return nil, err
 	}
@@ -257,6 +257,32 @@ func ChangeUserEntry(ctx context.Context, userID, day int, entry bool) (*User, e
 		user.EntryDay2 = entry
 	case 3:
 		user.EntryDay3 = entry
+	}
+
+	if err := orm(ctx).Save(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func ChangeUserEntries(ctx context.Context, userID int, entries []int) (*User, error) {
+	user := User{}
+	if err := orm(ctx).First(&user, userID).Error; err != nil {
+		return nil, panicUnlessNotFound(err)
+	}
+
+	user.EntryDay1 = false
+	user.EntryDay2 = false
+	user.EntryDay3 = false
+	for _, v := range entries {
+		switch v {
+		case 1:
+			user.EntryDay1 = true
+		case 2:
+			user.EntryDay2 = true
+		case 3:
+			user.EntryDay3 = true
+		}
 	}
 
 	if err := orm(ctx).Save(&user).Error; err != nil {

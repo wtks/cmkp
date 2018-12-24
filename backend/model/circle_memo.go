@@ -79,7 +79,7 @@ func GetCircleMemoByID(ctx context.Context, id int) (*CircleMemo, error) {
 func GetCircleMemosByCircleID(ctx context.Context, circleID int) ([]*CircleMemo, error) {
 	if loader, ok := getCircleMemoLoader(ctx); ok {
 		ids := make([]int, 0)
-		if err := orm(ctx).Model(CircleMemo{}).Where(&CircleMemo{CircleID: circleID}).Pluck("id", &ids).Error; err != nil {
+		if err := orm(ctx).Model(CircleMemo{}).Where(&CircleMemo{CircleID: circleID}).Order("updated_at DESC").Pluck("id", &ids).Error; err != nil {
 			panic(err)
 		}
 
@@ -93,7 +93,7 @@ func GetCircleMemosByCircleID(ctx context.Context, circleID int) ([]*CircleMemo,
 	}
 
 	memos := make([]*CircleMemo, 0)
-	if err := orm(ctx).Find(&memos, &CircleMemo{CircleID: circleID}).Error; err != nil {
+	if err := orm(ctx).Order("updated_at DESC").Find(&memos, &CircleMemo{CircleID: circleID}).Error; err != nil {
 		panic(err)
 	}
 	return memos, nil

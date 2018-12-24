@@ -49,6 +49,16 @@ func (ucp *UserCirclePriority) User(ctx context.Context) (*User, error) {
 	return GetUserByID(ctx, ucp.UserID)
 }
 
+func (ucp *UserCirclePriority) Circles(ctx context.Context) ([]*Circle, error) {
+	res := []*Circle{nil, nil, nil, nil, nil}
+	for k, v := range ucp.Priorities() {
+		if v != nil {
+			res[k], _ = GetCircleByID(ctx, *v)
+		}
+	}
+	return res, nil
+}
+
 func (ucp *UserCirclePriority) getPriorityRank(rank int) *PriorityRank {
 	id := ucp.Priority(rank)
 	if id == nil {
@@ -83,9 +93,17 @@ func GetUserCirclePriorityByUserID(ctx context.Context, id int) ([]*UserCirclePr
 	return ucp, nil
 }
 
+func GetUserCirclePriorityByUserIDAndDay(ctx context.Context, id, day int) (*UserCirclePriority, error) {
+	ucp := &UserCirclePriority{}
+	if err := orm(ctx).Where(map[string]interface{}{"user_id": id, "day": day}).FirstOrCreate(ucp).Error; err != nil {
+		return nil, panicUnlessNotFound(err)
+	}
+	return ucp, nil
+}
+
 func GetPriorityRankListByCircleID(ctx context.Context, id int) ([]*PriorityRank, error) {
 	ucp := make([]*UserCirclePriority, 0)
-	if err := orm(ctx).Where("priority1 = ? OR priority2 = ? OR priority3 = ? OR priority4 = ? OR priority5 = ?", id, id, id, id, id).Find(ucp).Error; err != nil {
+	if err := orm(ctx).Where("priority1 = ? OR priority2 = ? OR priority3 = ? OR priority4 = ? OR priority5 = ?", id, id, id, id, id).Find(&ucp).Error; err != nil {
 		panic(err)
 	}
 
@@ -112,7 +130,7 @@ func GetPriorityRankListByCircleID(ctx context.Context, id int) ([]*PriorityRank
 func SetUserCirclePriority(ctx context.Context, userID, day, rank int, circleID *int) (*UserCirclePriority, error) {
 	db := orm(ctx)
 	ucp := &UserCirclePriority{}
-	if err := db.Where(&UserCirclePriority{UserID: userID, Day: day}).FirstOrCreate(ucp).Error; err != nil {
+	if err := db.Where(map[string]interface{}{"user_id": userID, "day": day}).FirstOrCreate(ucp).Error; err != nil {
 		panic(err)
 	}
 
@@ -128,6 +146,31 @@ func SetUserCirclePriority(ctx context.Context, userID, day, rank int, circleID 
 	case 5:
 		ucp.Priority5 = circleID
 	}
+
+	if err := db.Save(ucp).Error; err != nil {
+		return nil, err
+	}
+	return ucp, nil
+}
+
+func SetUserCirclePriorities(ctx context.Context, userID, day int, circleIDs []int) (*UserCirclePriority, error) {
+	db := orm(ctx)
+	ucp := &UserCirclePriority{}
+	if err := db.Where(map[string]interface{}{"user_id": userID, "day": day}).FirstOrCreate(ucp).Error; err != nil {
+		panic(err)
+	}
+
+	tmp := []*int{nil, nil, nil, nil, nil}
+	for i, v := range circleIDs {
+		v := v
+		tmp[i] = &v
+	}
+
+	ucp.Priority1 = tmp[0]
+	ucp.Priority2 = tmp[1]
+	ucp.Priority3 = tmp[2]
+	ucp.Priority4 = tmp[3]
+	ucp.Priority5 = tmp[4]
 
 	if err := db.Save(ucp).Error; err != nil {
 		return nil, err

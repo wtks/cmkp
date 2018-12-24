@@ -15,6 +15,7 @@ type User {
   id: Int!
   name: String!
   displayName: String!
+  role: Role!
   entry(day: Int!): Boolean!
   entryDays: [Int!]!
   requestItems: [UserRequestItem!]!
@@ -33,6 +34,7 @@ type Circle {
   block: String!
   space: String!
   locationType: Int!
+  locationString(day: Boolean! = false): String!
   genre: String!
   pixivId: Int
   twitterId: String
@@ -40,6 +42,7 @@ type Circle {
   website: String!
   items: [Item!]!
   memos: [CircleMemo!]!
+  requestedItems(userId: Int = null): [Item!]!
   requestingUser: [User!]!
   prioritized: [PriorityRank!]!
   updatedAt: Time!
@@ -65,6 +68,8 @@ type Item {
   createdAt: Time!
   updatedAt: Time!
   requests: [UserRequestItem!]!
+  myRequest: UserRequestItem
+  userRequest(userId: Int!): UserRequestItem
 }
 
 type UserRequestNote {
@@ -105,6 +110,7 @@ type UserCirclePriority {
   priority4: Int
   priority5: Int
   priorities: [Int]!
+  circles: [Circle]!
   createdAt: Time!
   updatedAt: Time!
 }
@@ -122,19 +128,22 @@ type Query {
   myRequests: [UserRequestItem]
   myRequestNotes: [UserRequestNote]
   myRequestedCircles: [Circle]
+  myCirclePriorityIds(day: Int!): [Int!]!
 
   user(id: Int!): User
   users: [User]
   circle(id: Int!): Circle
   circles(q: String! = "", days: [Int!]): [Circle]
   requestedCircles(day: Int! = -1): [Circle]
+  userRequestedCircles(userId: Int!): [Circle]
   circleMemo(id: Int!): CircleMemo
   circleMemos(circleId: Int!): [CircleMemo]
   item(id: Int!): Item
   items(circleId: Int!): [Item]
   request(id: Int!): UserRequestItem
   requestNote(id: Int!): UserRequestNote
-  requestNotes: [UserRequestNote]
+  requestNotes(userId: Int! = -1): [UserRequestNote]
+  circlePriority(userId: Int!, day: Int!): UserCirclePriority
 
   deadline(day: Int!): Time!
   deadlines: [Deadline]
@@ -144,6 +153,7 @@ type Mutation {
   changePassword(oldPassword: String!, newPassword: String!): Boolean!
 
   setCirclePriority(day: Int!, rank: Int!, circleId: Int): UserCirclePriority
+  setCirclePriorities(day: Int!, circleIds: [Int!]!): UserCirclePriority
 
   createItem(circleId: Int!, name: String!, price: Int!): Item
   changeItemName(itemId: Int!, name:String!): Item
@@ -153,6 +163,7 @@ type Mutation {
   changeUserPassword(userId: Int!, password: String!): Boolean!
   changeUserRole(userId: Int!, role: Role!): User
   changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
+  changeUserEntries(userId: Int!, entries: [Int!]!): User
 
   createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
   changeRequestNum(requestId: Int!, num: Int!): UserRequestItem

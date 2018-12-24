@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"github.com/jinzhu/gorm"
+	"strconv"
 	"time"
 )
 
@@ -64,6 +65,22 @@ type Circle struct {
 	UpdatedAt    time.Time `gorm:"precision:6"      json:"updatedAt"`
 }
 
+func (c *Circle) LocationString(ctx context.Context, day bool) (string, error) {
+	if c.Day == 0 {
+		if day {
+			return "企業" + c.Hall + c.Space, nil
+		} else {
+			return c.Hall + c.Space, nil
+		}
+	} else {
+		if day {
+			return strconv.Itoa(c.Day) + "日目" + c.Hall + c.Block + c.Space, nil
+		} else {
+			return c.Hall + c.Block + c.Space, nil
+		}
+	}
+}
+
 func (c *Circle) Memos(ctx context.Context) ([]*CircleMemo, error) {
 	return GetCircleMemosByCircleID(ctx, c.ID)
 }
@@ -78,6 +95,17 @@ func (c *Circle) RequestingUser(ctx context.Context) ([]*User, error) {
 	} else {
 		return nil, ErrForbidden
 	}
+}
+
+func (c *Circle) RequestedItems(ctx context.Context, userId *int) ([]*Item, error) {
+	if userId != nil {
+		if *userId == getCtxUserId(ctx) || IsGranted(ctx, getCtxUserRole(ctx), RolePlanner) {
+			return GetRequestedItemsByCircleID(ctx, c.ID, userId)
+		}
+	} else if IsGranted(ctx, getCtxUserRole(ctx), RolePlanner) {
+		return GetRequestedItemsByCircleID(ctx, c.ID, nil)
+	}
+	return nil, ErrForbidden
 }
 
 func (c *Circle) Prioritized(ctx context.Context) ([]*PriorityRank, error) {
@@ -191,8 +219,7 @@ func GetRequestedCirclesByDay(ctx context.Context, day int) ([]*Circle, error) {
 func GetRequestedCirclesByUser(ctx context.Context, userID int) ([]*Circle, error) {
 	query := orm(ctx).
 		Model(Circle{}).
-		Joins("INNER JOIN (SELECT items.circle_id as id FROM items INNER JOIN user_request_items ON items.id = user_request_items.item_id GROUP BY items.circle_id) t ON circles.id = t.id").
-		Where(&UserRequestItem{UserID: userID})
+		Joins("INNER JOIN (SELECT items.circle_id as id FROM items INNER JOIN user_request_items ON items.id = user_request_items.item_id WHERE user_request_items.user_id = ? GROUP BY items.circle_id) t ON circles.id = t.id", userID)
 
 	if loader, ok := getCircleLoader(ctx); ok {
 		ids := make([]int, 0)

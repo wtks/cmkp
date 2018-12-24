@@ -74,7 +74,7 @@ func GetUserRequestNoteByID(ctx context.Context, id int) (*UserRequestNote, erro
 func GetUserRequestNotes(ctx context.Context) ([]*UserRequestNote, error) {
 	if loader, ok := getUserRequestNoteLoader(ctx); ok {
 		ids := make([]int, 0)
-		if err := orm(ctx).Model(UserRequestItem{}).Pluck("id", &ids).Error; err != nil {
+		if err := orm(ctx).Model(UserRequestNote{}).Order("updated_at DESC").Pluck("id", &ids).Error; err != nil {
 			panic(err)
 		}
 
@@ -88,7 +88,7 @@ func GetUserRequestNotes(ctx context.Context) ([]*UserRequestNote, error) {
 	}
 
 	arr := make([]*UserRequestNote, 0)
-	if err := orm(ctx).Find(&arr).Error; err != nil {
+	if err := orm(ctx).Order("updated_at DESC").Find(&arr).Error; err != nil {
 		panic(err)
 	}
 	return arr, nil
@@ -99,7 +99,7 @@ func GetUserRequestNotesByUserID(ctx context.Context, userID int) ([]*UserReques
 	cond := &UserRequestNote{UserID: userID}
 	if loader, ok := getUserRequestNoteLoader(ctx); ok {
 		ids := make([]int, 0)
-		if err := orm(ctx).Model(UserRequestNote{}).Where(cond).Pluck("id", &ids).Error; err != nil {
+		if err := orm(ctx).Model(UserRequestNote{}).Where(cond).Order("updated_at DESC").Pluck("id", &ids).Error; err != nil {
 			panic(err)
 		}
 
@@ -113,7 +113,7 @@ func GetUserRequestNotesByUserID(ctx context.Context, userID int) ([]*UserReques
 	}
 
 	arr := make([]*UserRequestNote, 0)
-	if err := orm(ctx).Find(&arr, cond).Error; err != nil {
+	if err := orm(ctx).Order("updated_at DESC").Find(&arr, cond).Error; err != nil {
 		panic(err)
 	}
 	return arr, nil

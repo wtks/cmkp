@@ -50,6 +50,7 @@ type ComplexityRoot struct {
 		Block          func(childComplexity int) int
 		Space          func(childComplexity int) int
 		LocationType   func(childComplexity int) int
+		LocationString func(childComplexity int, day bool) int
 		Genre          func(childComplexity int) int
 		PixivId        func(childComplexity int) int
 		TwitterId      func(childComplexity int) int
@@ -57,6 +58,7 @@ type ComplexityRoot struct {
 		Website        func(childComplexity int) int
 		Items          func(childComplexity int) int
 		Memos          func(childComplexity int) int
+		RequestedItems func(childComplexity int, userId *int) int
 		RequestingUser func(childComplexity int) int
 		Prioritized    func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
@@ -80,36 +82,40 @@ type ComplexityRoot struct {
 	}
 
 	Item struct {
-		Id        func(childComplexity int) int
-		CircleId  func(childComplexity int) int
-		Circle    func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Price     func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		Requests  func(childComplexity int) int
+		Id          func(childComplexity int) int
+		CircleId    func(childComplexity int) int
+		Circle      func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Price       func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Requests    func(childComplexity int) int
+		MyRequest   func(childComplexity int) int
+		UserRequest func(childComplexity int, userId int) int
 	}
 
 	Mutation struct {
-		ChangePassword     func(childComplexity int, oldPassword string, newPassword string) int
-		SetCirclePriority  func(childComplexity int, day int, rank int, circleId *int) int
-		CreateItem         func(childComplexity int, circleId int, name string, price int) int
-		ChangeItemName     func(childComplexity int, itemId int, name string) int
-		ChangeItemPrice    func(childComplexity int, itemId int, price int) int
-		CreateUser         func(childComplexity int, username string, displayName string, password string) int
-		ChangeUserPassword func(childComplexity int, userId int, password string) int
-		ChangeUserRole     func(childComplexity int, userId int, role model.Role) int
-		ChangeUserEntry    func(childComplexity int, userId int, day int, entry bool) int
-		CreateRequest      func(childComplexity int, userId *int, itemId int, num int) int
-		ChangeRequestNum   func(childComplexity int, requestId int, num int) int
-		DeleteRequest      func(childComplexity int, id int) int
-		PostRequestNote    func(childComplexity int, content string) int
-		EditRequestNote    func(childComplexity int, id int, content string) int
-		DeleteRequestNote  func(childComplexity int, id int) int
-		PostCircleMemo     func(childComplexity int, circleId int, content string) int
-		EditCircleMemo     func(childComplexity int, id int, content string) int
-		DeleteCircleMemo   func(childComplexity int, id int) int
-		SetDeadline        func(childComplexity int, day int, time time.Time) int
+		ChangePassword      func(childComplexity int, oldPassword string, newPassword string) int
+		SetCirclePriority   func(childComplexity int, day int, rank int, circleId *int) int
+		SetCirclePriorities func(childComplexity int, day int, circleIds []int) int
+		CreateItem          func(childComplexity int, circleId int, name string, price int) int
+		ChangeItemName      func(childComplexity int, itemId int, name string) int
+		ChangeItemPrice     func(childComplexity int, itemId int, price int) int
+		CreateUser          func(childComplexity int, username string, displayName string, password string) int
+		ChangeUserPassword  func(childComplexity int, userId int, password string) int
+		ChangeUserRole      func(childComplexity int, userId int, role model.Role) int
+		ChangeUserEntry     func(childComplexity int, userId int, day int, entry bool) int
+		ChangeUserEntries   func(childComplexity int, userId int, entries []int) int
+		CreateRequest       func(childComplexity int, userId *int, itemId int, num int) int
+		ChangeRequestNum    func(childComplexity int, requestId int, num int) int
+		DeleteRequest       func(childComplexity int, id int) int
+		PostRequestNote     func(childComplexity int, content string) int
+		EditRequestNote     func(childComplexity int, id int, content string) int
+		DeleteRequestNote   func(childComplexity int, id int) int
+		PostCircleMemo      func(childComplexity int, circleId int, content string) int
+		EditCircleMemo      func(childComplexity int, id int, content string) int
+		DeleteCircleMemo    func(childComplexity int, id int) int
+		SetDeadline         func(childComplexity int, day int, time time.Time) int
 	}
 
 	PriorityRank struct {
@@ -121,30 +127,34 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Me                 func(childComplexity int) int
-		MyRequests         func(childComplexity int) int
-		MyRequestNotes     func(childComplexity int) int
-		MyRequestedCircles func(childComplexity int) int
-		User               func(childComplexity int, id int) int
-		Users              func(childComplexity int) int
-		Circle             func(childComplexity int, id int) int
-		Circles            func(childComplexity int, q string, days []int) int
-		RequestedCircles   func(childComplexity int, day int) int
-		CircleMemo         func(childComplexity int, id int) int
-		CircleMemos        func(childComplexity int, circleId int) int
-		Item               func(childComplexity int, id int) int
-		Items              func(childComplexity int, circleId int) int
-		Request            func(childComplexity int, id int) int
-		RequestNote        func(childComplexity int, id int) int
-		RequestNotes       func(childComplexity int) int
-		Deadline           func(childComplexity int, day int) int
-		Deadlines          func(childComplexity int) int
+		Me                   func(childComplexity int) int
+		MyRequests           func(childComplexity int) int
+		MyRequestNotes       func(childComplexity int) int
+		MyRequestedCircles   func(childComplexity int) int
+		MyCirclePriorityIds  func(childComplexity int, day int) int
+		User                 func(childComplexity int, id int) int
+		Users                func(childComplexity int) int
+		Circle               func(childComplexity int, id int) int
+		Circles              func(childComplexity int, q string, days []int) int
+		RequestedCircles     func(childComplexity int, day int) int
+		UserRequestedCircles func(childComplexity int, userId int) int
+		CircleMemo           func(childComplexity int, id int) int
+		CircleMemos          func(childComplexity int, circleId int) int
+		Item                 func(childComplexity int, id int) int
+		Items                func(childComplexity int, circleId int) int
+		Request              func(childComplexity int, id int) int
+		RequestNote          func(childComplexity int, id int) int
+		RequestNotes         func(childComplexity int, userId int) int
+		CirclePriority       func(childComplexity int, userId int, day int) int
+		Deadline             func(childComplexity int, day int) int
+		Deadlines            func(childComplexity int) int
 	}
 
 	User struct {
 		Id               func(childComplexity int) int
 		Name             func(childComplexity int) int
 		DisplayName      func(childComplexity int) int
+		Role             func(childComplexity int) int
 		Entry            func(childComplexity int, day int) int
 		EntryDays        func(childComplexity int) int
 		RequestItems     func(childComplexity int) int
@@ -165,6 +175,7 @@ type ComplexityRoot struct {
 		Priority4  func(childComplexity int) int
 		Priority5  func(childComplexity int) int
 		Priorities func(childComplexity int) int
+		Circles    func(childComplexity int) int
 		CreatedAt  func(childComplexity int) int
 		UpdatedAt  func(childComplexity int) int
 	}
@@ -194,6 +205,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error)
 	SetCirclePriority(ctx context.Context, day int, rank int, circleId *int) (*model.UserCirclePriority, error)
+	SetCirclePriorities(ctx context.Context, day int, circleIds []int) (*model.UserCirclePriority, error)
 	CreateItem(ctx context.Context, circleId int, name string, price int) (*model.Item, error)
 	ChangeItemName(ctx context.Context, itemId int, name string) (*model.Item, error)
 	ChangeItemPrice(ctx context.Context, itemId int, price int) (*model.Item, error)
@@ -201,6 +213,7 @@ type MutationResolver interface {
 	ChangeUserPassword(ctx context.Context, userId int, password string) (bool, error)
 	ChangeUserRole(ctx context.Context, userId int, role model.Role) (*model.User, error)
 	ChangeUserEntry(ctx context.Context, userId int, day int, entry bool) (*model.User, error)
+	ChangeUserEntries(ctx context.Context, userId int, entries []int) (*model.User, error)
 	CreateRequest(ctx context.Context, userId *int, itemId int, num int) (*model.UserRequestItem, error)
 	ChangeRequestNum(ctx context.Context, requestId int, num int) (*model.UserRequestItem, error)
 	DeleteRequest(ctx context.Context, id int) (bool, error)
@@ -217,20 +230,73 @@ type QueryResolver interface {
 	MyRequests(ctx context.Context) ([]*model.UserRequestItem, error)
 	MyRequestNotes(ctx context.Context) ([]*model.UserRequestNote, error)
 	MyRequestedCircles(ctx context.Context) ([]*model.Circle, error)
+	MyCirclePriorityIds(ctx context.Context, day int) ([]int, error)
 	User(ctx context.Context, id int) (*model.User, error)
 	Users(ctx context.Context) ([]*model.User, error)
 	Circle(ctx context.Context, id int) (*model.Circle, error)
 	Circles(ctx context.Context, q string, days []int) ([]*model.Circle, error)
 	RequestedCircles(ctx context.Context, day int) ([]*model.Circle, error)
+	UserRequestedCircles(ctx context.Context, userId int) ([]*model.Circle, error)
 	CircleMemo(ctx context.Context, id int) (*model.CircleMemo, error)
 	CircleMemos(ctx context.Context, circleId int) ([]*model.CircleMemo, error)
 	Item(ctx context.Context, id int) (*model.Item, error)
 	Items(ctx context.Context, circleId int) ([]*model.Item, error)
 	Request(ctx context.Context, id int) (*model.UserRequestItem, error)
 	RequestNote(ctx context.Context, id int) (*model.UserRequestNote, error)
-	RequestNotes(ctx context.Context) ([]*model.UserRequestNote, error)
+	RequestNotes(ctx context.Context, userId int) ([]*model.UserRequestNote, error)
+	CirclePriority(ctx context.Context, userId int, day int) (*model.UserCirclePriority, error)
 	Deadline(ctx context.Context, day int) (time.Time, error)
 	Deadlines(ctx context.Context) ([]*model.Deadline, error)
+}
+
+func field_Circle_locationString_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 bool
+	if tmp, ok := rawArgs["day"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalBoolean(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["day"] = arg0
+	return args, nil
+
+}
+
+func field_Circle_requestedItems_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["userId"]; ok {
+		var err error
+		var ptr1 int
+		if tmp != nil {
+			ptr1, err = graphql.UnmarshalInt(tmp)
+			arg0 = &ptr1
+		}
+
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+
+}
+
+func field_Item_userRequest_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+
 }
 
 func field_Mutation_changePassword_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -291,6 +357,41 @@ func field_Mutation_setCirclePriority_args(rawArgs map[string]interface{}) (map[
 		}
 	}
 	args["circleId"] = arg2
+	return args, nil
+
+}
+
+func field_Mutation_setCirclePriorities_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["day"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["day"] = arg0
+	var arg1 []int
+	if tmp, ok := rawArgs["circleIds"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			} else {
+				rawIf1 = []interface{}{tmp}
+			}
+		}
+		arg1 = make([]int, len(rawIf1))
+		for idx1 := range rawIf1 {
+			arg1[idx1], err = graphql.UnmarshalInt(rawIf1[idx1])
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["circleIds"] = arg1
 	return args, nil
 
 }
@@ -486,6 +587,41 @@ func field_Mutation_changeUserEntry_args(rawArgs map[string]interface{}) (map[st
 		}
 	}
 	args["entry"] = arg2
+	return args, nil
+
+}
+
+func field_Mutation_changeUserEntries_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	var arg1 []int
+	if tmp, ok := rawArgs["entries"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			} else {
+				rawIf1 = []interface{}{tmp}
+			}
+		}
+		arg1 = make([]int, len(rawIf1))
+		for idx1 := range rawIf1 {
+			arg1[idx1], err = graphql.UnmarshalInt(rawIf1[idx1])
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["entries"] = arg1
 	return args, nil
 
 }
@@ -708,6 +844,21 @@ func field_Mutation_setDeadline_args(rawArgs map[string]interface{}) (map[string
 
 }
 
+func field_Query_myCirclePriorityIds_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["day"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["day"] = arg0
+	return args, nil
+
+}
+
 func field_Query_user_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	args := map[string]interface{}{}
 	var arg0 int
@@ -784,6 +935,21 @@ func field_Query_requestedCircles_args(rawArgs map[string]interface{}) (map[stri
 		}
 	}
 	args["day"] = arg0
+	return args, nil
+
+}
+
+func field_Query_userRequestedCircles_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
 	return args, nil
 
 }
@@ -874,6 +1040,45 @@ func field_Query_requestNote_args(rawArgs map[string]interface{}) (map[string]in
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+
+}
+
+func field_Query_requestNotes_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+
+}
+
+func field_Query_circlePriority_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["day"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["day"] = arg1
 	return args, nil
 
 }
@@ -1037,6 +1242,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Circle.LocationType(childComplexity), true
 
+	case "Circle.locationString":
+		if e.complexity.Circle.LocationString == nil {
+			break
+		}
+
+		args, err := field_Circle_locationString_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Circle.LocationString(childComplexity, args["day"].(bool)), true
+
 	case "Circle.genre":
 		if e.complexity.Circle.Genre == nil {
 			break
@@ -1085,6 +1302,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Circle.Memos(childComplexity), true
+
+	case "Circle.requestedItems":
+		if e.complexity.Circle.RequestedItems == nil {
+			break
+		}
+
+		args, err := field_Circle_requestedItems_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Circle.RequestedItems(childComplexity, args["userId"].(*int)), true
 
 	case "Circle.requestingUser":
 		if e.complexity.Circle.RequestingUser == nil {
@@ -1240,6 +1469,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Item.Requests(childComplexity), true
 
+	case "Item.myRequest":
+		if e.complexity.Item.MyRequest == nil {
+			break
+		}
+
+		return e.complexity.Item.MyRequest(childComplexity), true
+
+	case "Item.userRequest":
+		if e.complexity.Item.UserRequest == nil {
+			break
+		}
+
+		args, err := field_Item_userRequest_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Item.UserRequest(childComplexity, args["userId"].(int)), true
+
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
 			break
@@ -1263,6 +1511,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SetCirclePriority(childComplexity, args["day"].(int), args["rank"].(int), args["circleId"].(*int)), true
+
+	case "Mutation.setCirclePriorities":
+		if e.complexity.Mutation.SetCirclePriorities == nil {
+			break
+		}
+
+		args, err := field_Mutation_setCirclePriorities_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetCirclePriorities(childComplexity, args["day"].(int), args["circleIds"].([]int)), true
 
 	case "Mutation.createItem":
 		if e.complexity.Mutation.CreateItem == nil {
@@ -1347,6 +1607,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ChangeUserEntry(childComplexity, args["userId"].(int), args["day"].(int), args["entry"].(bool)), true
+
+	case "Mutation.changeUserEntries":
+		if e.complexity.Mutation.ChangeUserEntries == nil {
+			break
+		}
+
+		args, err := field_Mutation_changeUserEntries_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangeUserEntries(childComplexity, args["userId"].(int), args["entries"].([]int)), true
 
 	case "Mutation.createRequest":
 		if e.complexity.Mutation.CreateRequest == nil {
@@ -1531,6 +1803,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.MyRequestedCircles(childComplexity), true
 
+	case "Query.myCirclePriorityIds":
+		if e.complexity.Query.MyCirclePriorityIds == nil {
+			break
+		}
+
+		args, err := field_Query_myCirclePriorityIds_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MyCirclePriorityIds(childComplexity, args["day"].(int)), true
+
 	case "Query.user":
 		if e.complexity.Query.User == nil {
 			break
@@ -1585,6 +1869,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.RequestedCircles(childComplexity, args["day"].(int)), true
+
+	case "Query.userRequestedCircles":
+		if e.complexity.Query.UserRequestedCircles == nil {
+			break
+		}
+
+		args, err := field_Query_userRequestedCircles_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserRequestedCircles(childComplexity, args["userId"].(int)), true
 
 	case "Query.circleMemo":
 		if e.complexity.Query.CircleMemo == nil {
@@ -1663,7 +1959,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.RequestNotes(childComplexity), true
+		args, err := field_Query_requestNotes_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.RequestNotes(childComplexity, args["userId"].(int)), true
+
+	case "Query.circlePriority":
+		if e.complexity.Query.CirclePriority == nil {
+			break
+		}
+
+		args, err := field_Query_circlePriority_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CirclePriority(childComplexity, args["userId"].(int), args["day"].(int)), true
 
 	case "Query.deadline":
 		if e.complexity.Query.Deadline == nil {
@@ -1704,6 +2017,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.DisplayName(childComplexity), true
+
+	case "User.role":
+		if e.complexity.User.Role == nil {
+			break
+		}
+
+		return e.complexity.User.Role(childComplexity), true
 
 	case "User.entry":
 		if e.complexity.User.Entry == nil {
@@ -1833,6 +2153,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UserCirclePriority.Priorities(childComplexity), true
+
+	case "UserCirclePriority.circles":
+		if e.complexity.UserCirclePriority.Circles == nil {
+			break
+		}
+
+		return e.complexity.UserCirclePriority.Circles(childComplexity), true
 
 	case "UserCirclePriority.createdAt":
 		if e.complexity.UserCirclePriority.CreatedAt == nil {
@@ -2054,6 +2381,15 @@ func (ec *executionContext) _Circle(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "locationString":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Circle_locationString(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "genre":
 			out.Values[i] = ec._Circle_genre(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2083,6 +2419,15 @@ func (ec *executionContext) _Circle(ctx context.Context, sel ast.SelectionSet, o
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Circle_memos(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "requestedItems":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Circle_requestedItems(ctx, field, obj)
 				if out.Values[i] == graphql.Null {
 					invalid = true
 				}
@@ -2336,6 +2681,39 @@ func (ec *executionContext) _Circle_locationType(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return graphql.MarshalInt(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Circle_locationString(ctx context.Context, field graphql.CollectedField, obj *model.Circle) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Circle_locationString_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Circle",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LocationString(ctx, args["day"].(bool))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
 }
 
 // nolint: vetshadow
@@ -2597,6 +2975,79 @@ func (ec *executionContext) _Circle_memos(ctx context.Context, field graphql.Col
 				}
 
 				return ec._CircleMemo(ctx, field.Selections, res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Circle_requestedItems(ctx context.Context, field graphql.CollectedField, obj *model.Circle) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Circle_requestedItems_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Circle",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequestedItems(ctx, args["userId"].(*int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Item)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				if res[idx1] == nil {
+					if !ec.HasError(rctx) {
+						ec.Errorf(ctx, "must not be null")
+					}
+					return graphql.Null
+				}
+
+				return ec._Item(ctx, field.Selections, res[idx1])
 			}()
 		}
 		if isLen1 {
@@ -3261,6 +3712,18 @@ func (ec *executionContext) _Item(ctx context.Context, sel ast.SelectionSet, obj
 				}
 				wg.Done()
 			}(i, field)
+		case "myRequest":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Item_myRequest(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "userRequest":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Item_userRequest(ctx, field, obj)
+				wg.Done()
+			}(i, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3536,6 +3999,70 @@ func (ec *executionContext) _Item_requests(ctx context.Context, field graphql.Co
 	return arr1
 }
 
+// nolint: vetshadow
+func (ec *executionContext) _Item_myRequest(ctx context.Context, field graphql.CollectedField, obj *model.Item) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Item",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MyRequest(ctx)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserRequestItem)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._UserRequestItem(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Item_userRequest(ctx context.Context, field graphql.CollectedField, obj *model.Item) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Item_userRequest_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Item",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserRequest(ctx, args["userId"].(int))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserRequestItem)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._UserRequestItem(ctx, field.Selections, res)
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 // nolint: gocyclo, errcheck, gas, goconst
@@ -3561,6 +4088,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "setCirclePriority":
 			out.Values[i] = ec._Mutation_setCirclePriority(ctx, field)
+		case "setCirclePriorities":
+			out.Values[i] = ec._Mutation_setCirclePriorities(ctx, field)
 		case "createItem":
 			out.Values[i] = ec._Mutation_createItem(ctx, field)
 		case "changeItemName":
@@ -3578,6 +4107,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_changeUserRole(ctx, field)
 		case "changeUserEntry":
 			out.Values[i] = ec._Mutation_changeUserEntry(ctx, field)
+		case "changeUserEntries":
+			out.Values[i] = ec._Mutation_changeUserEntries(ctx, field)
 		case "createRequest":
 			out.Values[i] = ec._Mutation_createRequest(ctx, field)
 		case "changeRequestNum":
@@ -3674,6 +4205,41 @@ func (ec *executionContext) _Mutation_setCirclePriority(ctx context.Context, fie
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().SetCirclePriority(rctx, args["day"].(int), args["rank"].(int), args["circleId"].(*int))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserCirclePriority)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._UserCirclePriority(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Mutation_setCirclePriorities(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Mutation_setCirclePriorities_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetCirclePriorities(rctx, args["day"].(int), args["circleIds"].([]int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -3917,6 +4483,41 @@ func (ec *executionContext) _Mutation_changeUserEntry(ctx context.Context, field
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().ChangeUserEntry(rctx, args["userId"].(int), args["day"].(int), args["entry"].(bool))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._User(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Mutation_changeUserEntries(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Mutation_changeUserEntries_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ChangeUserEntries(rctx, args["userId"].(int), args["entries"].([]int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -4527,6 +5128,15 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				out.Values[i] = ec._Query_myRequestedCircles(ctx, field)
 				wg.Done()
 			}(i, field)
+		case "myCirclePriorityIds":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_myCirclePriorityIds(ctx, field)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "user":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
@@ -4555,6 +5165,12 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Query_requestedCircles(ctx, field)
+				wg.Done()
+			}(i, field)
+		case "userRequestedCircles":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_userRequestedCircles(ctx, field)
 				wg.Done()
 			}(i, field)
 		case "circleMemo":
@@ -4597,6 +5213,12 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Query_requestNotes(ctx, field)
+				wg.Done()
+			}(i, field)
+		case "circlePriority":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_circlePriority(ctx, field)
 				wg.Done()
 			}(i, field)
 		case "deadline":
@@ -4842,6 +5464,48 @@ func (ec *executionContext) _Query_myRequestedCircles(ctx context.Context, field
 }
 
 // nolint: vetshadow
+func (ec *executionContext) _Query_myCirclePriorityIds(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_myCirclePriorityIds_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MyCirclePriorityIds(rctx, args["day"].(int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+
+	for idx1 := range res {
+		arr1[idx1] = func() graphql.Marshaler {
+			return graphql.MarshalInt(res[idx1])
+		}()
+	}
+
+	return arr1
+}
+
+// nolint: vetshadow
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
@@ -5059,6 +5723,73 @@ func (ec *executionContext) _Query_requestedCircles(ctx context.Context, field g
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().RequestedCircles(rctx, args["day"].(int))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Circle)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				if res[idx1] == nil {
+					return graphql.Null
+				}
+
+				return ec._Circle(ctx, field.Selections, res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Query_userRequestedCircles(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_userRequestedCircles_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().UserRequestedCircles(rctx, args["userId"].(int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -5384,16 +6115,22 @@ func (ec *executionContext) _Query_requestNote(ctx context.Context, field graphq
 func (ec *executionContext) _Query_requestNotes(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_requestNotes_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
 	rctx := &graphql.ResolverContext{
 		Object: "Query",
-		Args:   nil,
+		Args:   args,
 		Field:  field,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().RequestNotes(rctx)
+		return ec.resolvers.Query().RequestNotes(rctx, args["userId"].(int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -5439,6 +6176,41 @@ func (ec *executionContext) _Query_requestNotes(ctx context.Context, field graph
 	}
 	wg.Wait()
 	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Query_circlePriority(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_circlePriority_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CirclePriority(rctx, args["userId"].(int), args["day"].(int))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.UserCirclePriority)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._UserCirclePriority(ctx, field.Selections, res)
 }
 
 // nolint: vetshadow
@@ -5629,6 +6401,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "role":
+			out.Values[i] = ec._User_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "entry":
 			out.Values[i] = ec._User_entry(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5766,6 +6543,33 @@ func (ec *executionContext) _User_displayName(ctx context.Context, field graphql
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *model.User) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "User",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.Role)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return res
 }
 
 // nolint: vetshadow
@@ -6143,6 +6947,15 @@ func (ec *executionContext) _UserCirclePriority(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "circles":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._UserCirclePriority_circles(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "createdAt":
 			out.Values[i] = ec._UserCirclePriority_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6464,6 +7277,70 @@ func (ec *executionContext) _UserCirclePriority_priorities(ctx context.Context, 
 		}()
 	}
 
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _UserCirclePriority_circles(ctx context.Context, field graphql.CollectedField, obj *model.UserCirclePriority) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "UserCirclePriority",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Circles(ctx)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Circle)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				if res[idx1] == nil {
+					return graphql.Null
+				}
+
+				return ec._Circle(ctx, field.Selections, res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
 	return arr1
 }
 
@@ -8577,174 +9454,185 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var parsedSchema = gqlparser.MustLoadSchema(
 	&ast.Source{Name: "schema.graphql", Input: `schema {
-    query: Query
-    mutation: Mutation
+  query: Query
+  mutation: Mutation
 }
 
 scalar Time
 
 enum Role {
-    ADMIN
-    USER
-    PLANNER
+  ADMIN
+  USER
+  PLANNER
 }
 
 type User {
-    id: Int!
-    name: String!
-    displayName: String!
-    entry(day: Int!): Boolean!
-    entryDays: [Int!]!
-    requestItems: [UserRequestItem!]!
-    requestNotes: [UserRequestNote!]!
-    circlePriorities: [UserCirclePriority!]!
-    createdAt: Time!
-    updatedAt: Time!
+  id: Int!
+  name: String!
+  displayName: String!
+  role: Role!
+  entry(day: Int!): Boolean!
+  entryDays: [Int!]!
+  requestItems: [UserRequestItem!]!
+  requestNotes: [UserRequestNote!]!
+  circlePriorities: [UserCirclePriority!]!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type Circle {
-    id: Int!
-    name: String!
-    author: String!
-    hall: String!
-    day: Int!
-    block: String!
-    space: String!
-    locationType: Int!
-    genre: String!
-    pixivId: Int
-    twitterId: String
-    niconicoId: Int
-    website: String!
-    items: [Item!]!
-    memos: [CircleMemo!]!
-    requestingUser: [User!]!
-    prioritized: [PriorityRank!]!
-    updatedAt: Time!
+  id: Int!
+  name: String!
+  author: String!
+  hall: String!
+  day: Int!
+  block: String!
+  space: String!
+  locationType: Int!
+  locationString(day: Boolean! = false): String!
+  genre: String!
+  pixivId: Int
+  twitterId: String
+  niconicoId: Int
+  website: String!
+  items: [Item!]!
+  memos: [CircleMemo!]!
+  requestedItems(userId: Int = null): [Item!]!
+  requestingUser: [User!]!
+  prioritized: [PriorityRank!]!
+  updatedAt: Time!
 }
 
 type CircleMemo {
-    id: Int!
-    circleId: Int!
-    circle: Circle!
-    userId: Int!
-    user: User!
-    content: String!
-    createdAt: Time!
-    updatedAt: Time!
+  id: Int!
+  circleId: Int!
+  circle: Circle!
+  userId: Int!
+  user: User!
+  content: String!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type Item {
-    id: Int!
-    circleId: Int!
-    circle: Circle!
-    name: String!
-    price: Int!
-    createdAt: Time!
-    updatedAt: Time!
-    requests: [UserRequestItem!]!
+  id: Int!
+  circleId: Int!
+  circle: Circle!
+  name: String!
+  price: Int!
+  createdAt: Time!
+  updatedAt: Time!
+  requests: [UserRequestItem!]!
+  myRequest: UserRequestItem
+  userRequest(userId: Int!): UserRequestItem
 }
 
 type UserRequestNote {
-    id: Int!
-    userId: Int!
-    user: User!
-    content: String!
-    createdAt: Time!
-    updatedAt: Time!
+  id: Int!
+  userId: Int!
+  user: User!
+  content: String!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type UserRequestItem {
-    id: Int!
-    userId: Int!
-    user: User!
-    itemId: Int!
-    item: Item!
-    circle: Circle!
-    num: Int!
-    createdAt: Time!
-    updatedAt: Time!
+  id: Int!
+  userId: Int!
+  user: User!
+  itemId: Int!
+  item: Item!
+  circle: Circle!
+  num: Int!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type Deadline {
-    day: Int!
-    datetime: Time!
-    updatedAt: Time!
+  day: Int!
+  datetime: Time!
+  updatedAt: Time!
 }
 
 type UserCirclePriority {
-    userId: Int!
-    user: User!
-    day: Int!
-    priority(rank: Int!): Int
-    priority1: Int
-    priority2: Int
-    priority3: Int
-    priority4: Int
-    priority5: Int
-    priorities: [Int]!
-    createdAt: Time!
-    updatedAt: Time!
+  userId: Int!
+  user: User!
+  day: Int!
+  priority(rank: Int!): Int
+  priority1: Int
+  priority2: Int
+  priority3: Int
+  priority4: Int
+  priority5: Int
+  priorities: [Int]!
+  circles: [Circle]!
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type PriorityRank {
-    circleId: Int!
-    circle: Circle!
-    userId: Int!
-    user: User!
-    rank: Int!
+  circleId: Int!
+  circle: Circle!
+  userId: Int!
+  user: User!
+  rank: Int!
 }
 
 type Query {
-    me: User
-    myRequests: [UserRequestItem]
-    myRequestNotes: [UserRequestNote]
-    myRequestedCircles: [Circle]
+  me: User
+  myRequests: [UserRequestItem]
+  myRequestNotes: [UserRequestNote]
+  myRequestedCircles: [Circle]
+  myCirclePriorityIds(day: Int!): [Int!]!
 
-    user(id: Int!): User
-    users: [User]
-    circle(id: Int!): Circle
-    circles(q: String! = "", days: [Int!]): [Circle]
-    requestedCircles(day: Int! = -1): [Circle]
-    circleMemo(id: Int!): CircleMemo
-    circleMemos(circleId: Int!): [CircleMemo]
-    item(id: Int!): Item
-    items(circleId: Int!): [Item]
-    request(id: Int!): UserRequestItem
-    requestNote(id: Int!): UserRequestNote
-    requestNotes: [UserRequestNote]
+  user(id: Int!): User
+  users: [User]
+  circle(id: Int!): Circle
+  circles(q: String! = "", days: [Int!]): [Circle]
+  requestedCircles(day: Int! = -1): [Circle]
+  userRequestedCircles(userId: Int!): [Circle]
+  circleMemo(id: Int!): CircleMemo
+  circleMemos(circleId: Int!): [CircleMemo]
+  item(id: Int!): Item
+  items(circleId: Int!): [Item]
+  request(id: Int!): UserRequestItem
+  requestNote(id: Int!): UserRequestNote
+  requestNotes(userId: Int! = -1): [UserRequestNote]
+  circlePriority(userId: Int!, day: Int!): UserCirclePriority
 
-    deadline(day: Int!): Time!
-    deadlines: [Deadline]
+  deadline(day: Int!): Time!
+  deadlines: [Deadline]
 }
 
 type Mutation {
-    changePassword(oldPassword: String!, newPassword: String!): Boolean!
+  changePassword(oldPassword: String!, newPassword: String!): Boolean!
 
-    setCirclePriority(day: Int!, rank: Int!, circleId: Int): UserCirclePriority
+  setCirclePriority(day: Int!, rank: Int!, circleId: Int): UserCirclePriority
+  setCirclePriorities(day: Int!, circleIds: [Int!]!): UserCirclePriority
 
-    createItem(circleId: Int!, name: String!, price: Int!): Item
-    changeItemName(itemId: Int!, name:String!): Item
-    changeItemPrice(itemId: Int!, price: Int!): Item
+  createItem(circleId: Int!, name: String!, price: Int!): Item
+  changeItemName(itemId: Int!, name:String!): Item
+  changeItemPrice(itemId: Int!, price: Int!): Item
 
-    createUser(username: String!, displayName: String!, password: String!): User
-    changeUserPassword(userId: Int!, password: String!): Boolean!
-    changeUserRole(userId: Int!, role: Role!): User
-    changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
+  createUser(username: String!, displayName: String!, password: String!): User
+  changeUserPassword(userId: Int!, password: String!): Boolean!
+  changeUserRole(userId: Int!, role: Role!): User
+  changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
+  changeUserEntries(userId: Int!, entries: [Int!]!): User
 
-    createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
-    changeRequestNum(requestId: Int!, num: Int!): UserRequestItem
-    deleteRequest(id: Int!): Boolean!
+  createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
+  changeRequestNum(requestId: Int!, num: Int!): UserRequestItem
+  deleteRequest(id: Int!): Boolean!
 
-    postRequestNote(content: String!): UserRequestNote
-    editRequestNote(id: Int!, content: String!): UserRequestNote
-    deleteRequestNote(id: Int!): Boolean!
+  postRequestNote(content: String!): UserRequestNote
+  editRequestNote(id: Int!, content: String!): UserRequestNote
+  deleteRequestNote(id: Int!): Boolean!
 
-    postCircleMemo(circleId: Int!, content: String!): CircleMemo
-    editCircleMemo(id: Int!, content: String!): CircleMemo
-    deleteCircleMemo(id: Int!): Boolean!
+  postCircleMemo(circleId: Int!, content: String!): CircleMemo
+  editCircleMemo(id: Int!, content: String!): CircleMemo
+  deleteCircleMemo(id: Int!): Boolean!
 
-    setDeadline(day: Int!, time: Time!): Time!
+  setDeadline(day: Int!, time: Time!): Time!
 }
 `},
 )
