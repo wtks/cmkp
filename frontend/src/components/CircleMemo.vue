@@ -2,7 +2,7 @@
   div
     span.caption {{ username }} - {{ datetimeString }}
     br
-    span.body-1(style="white-space: pre-wrap;word-wrap: break-word;" v-text="content" v-linkified)
+    span.body-1.user-content-text(v-text="content" v-linkified)
     template(v-if="isMine")
       v-flex(text-xs-right)
         v-dialog(v-model="deleteDialog" persistent width=500)

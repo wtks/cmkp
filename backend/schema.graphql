@@ -97,6 +97,7 @@ type Deadline {
   day: Int!
   datetime: Time!
   updatedAt: Time!
+  over: Boolean!
 }
 
 type UserCirclePriority {
@@ -123,6 +124,13 @@ type PriorityRank {
   rank: Int!
 }
 
+type Content {
+  id: String!
+  text: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
 type Query {
   me: User
   myRequests: [UserRequestItem]
@@ -146,7 +154,11 @@ type Query {
   circlePriority(userId: Int!, day: Int!): UserCirclePriority
 
   deadline(day: Int!): Time!
-  deadlines: [Deadline]
+  isDeadlineOver(day: Int!): Boolean!
+  deadlines(days: [Int!] = null): [Deadline]
+
+  content(id: String!): Content
+  contentText(id: String!): String!
 }
 
 type Mutation {
@@ -178,4 +190,6 @@ type Mutation {
   deleteCircleMemo(id: Int!): Boolean!
 
   setDeadline(day: Int!, time: Time!): Time!
+
+  setContent(id: String!, text: String!): Content
 }

@@ -17,7 +17,7 @@
                 div(v-for="note in notes" :key="note.id")
                   span.caption {{ formatDatetime(note.updatedAt) }}
                   br
-                  span.body-1(style="white-space: pre-wrap;word-wrap: break-word;" v-text="note.content" v-linkified)
+                  span.body-1.user-content-text(v-text="note.content" v-linkified)
       v-flex(d-flex sm12 md8)
         v-layout(row wrap)
           v-flex(d-flex xs12)

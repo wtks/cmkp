@@ -16,6 +16,10 @@ func (dl *Deadline) IsOver() bool {
 	return dl.Datetime.Before(time.Now())
 }
 
+func (dl *Deadline) Over(ctx context.Context) (bool, error) {
+	return dl.IsOver(), nil
+}
+
 func GetDeadline(ctx context.Context, day int) (*Deadline, error) {
 	v := Deadline{}
 	if err := orm(ctx).Where("day = ?", day).First(&v).Error; err != nil {

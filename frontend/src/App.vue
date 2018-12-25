@@ -209,3 +209,9 @@ export default {
   }
 }
 </script>
+
+<style lang="stylus">
+.user-content-text
+  white-space pre-wrap
+  word-wrap break-word
+</style>

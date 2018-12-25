@@ -15,7 +15,7 @@
         template(v-if="genre != null")
           dt ジャンル
           dd {{ genre }}
-        template
+        template(v-if="website != null || twitterId != null || pixivId != null || niconicoId != null")
           dt 外部リンク
           dd
             v-btn(v-if="website != null" icon :href="website" target="_blank")
@@ -93,9 +93,9 @@ export default {
         case 0:
           return ''
         case 1:
-          return '壁'
+          return '(壁)'
         case 2:
-          return 'シャッター'
+          return '(シャッター)'
         default:
           return ''
       }

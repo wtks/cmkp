@@ -33,3 +33,5 @@ models:
     model: github.com/wtks/cmkp/backend/model.UserCirclePriority
   PriorityRank:
     model: github.com/wtks/cmkp/backend/model.PriorityRank
+  Content:
+    model: github.com/wtks/cmkp/backend/model.Content

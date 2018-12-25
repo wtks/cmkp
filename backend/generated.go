@@ -75,10 +75,18 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	Content struct {
+		Id        func(childComplexity int) int
+		Text      func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
 	Deadline struct {
 		Day       func(childComplexity int) int
 		Datetime  func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+		Over      func(childComplexity int) int
 	}
 
 	Item struct {
@@ -116,6 +124,7 @@ type ComplexityRoot struct {
 		EditCircleMemo      func(childComplexity int, id int, content string) int
 		DeleteCircleMemo    func(childComplexity int, id int) int
 		SetDeadline         func(childComplexity int, day int, time time.Time) int
+		SetContent          func(childComplexity int, id string, text string) int
 	}
 
 	PriorityRank struct {
@@ -147,7 +156,10 @@ type ComplexityRoot struct {
 		RequestNotes         func(childComplexity int, userId int) int
 		CirclePriority       func(childComplexity int, userId int, day int) int
 		Deadline             func(childComplexity int, day int) int
-		Deadlines            func(childComplexity int) int
+		IsDeadlineOver       func(childComplexity int, day int) int
+		Deadlines            func(childComplexity int, days []int) int
+		Content              func(childComplexity int, id string) int
+		ContentText          func(childComplexity int, id string) int
 	}
 
 	User struct {
@@ -224,6 +236,7 @@ type MutationResolver interface {
 	EditCircleMemo(ctx context.Context, id int, content string) (*model.CircleMemo, error)
 	DeleteCircleMemo(ctx context.Context, id int) (bool, error)
 	SetDeadline(ctx context.Context, day int, time time.Time) (time.Time, error)
+	SetContent(ctx context.Context, id string, text string) (*model.Content, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -246,7 +259,10 @@ type QueryResolver interface {
 	RequestNotes(ctx context.Context, userId int) ([]*model.UserRequestNote, error)
 	CirclePriority(ctx context.Context, userId int, day int) (*model.UserCirclePriority, error)
 	Deadline(ctx context.Context, day int) (time.Time, error)
-	Deadlines(ctx context.Context) ([]*model.Deadline, error)
+	IsDeadlineOver(ctx context.Context, day int) (bool, error)
+	Deadlines(ctx context.Context, days []int) ([]*model.Deadline, error)
+	Content(ctx context.Context, id string) (*model.Content, error)
+	ContentText(ctx context.Context, id string) (string, error)
 }
 
 func field_Circle_locationString_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
@@ -844,6 +860,30 @@ func field_Mutation_setDeadline_args(rawArgs map[string]interface{}) (map[string
 
 }
 
+func field_Mutation_setContent_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["text"]; ok {
+		var err error
+		arg1, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["text"] = arg1
+	return args, nil
+
+}
+
 func field_Query_myCirclePriorityIds_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	args := map[string]interface{}{}
 	var arg0 int
@@ -1094,6 +1134,77 @@ func field_Query_deadline_args(rawArgs map[string]interface{}) (map[string]inter
 		}
 	}
 	args["day"] = arg0
+	return args, nil
+
+}
+
+func field_Query_isDeadlineOver_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["day"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalInt(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["day"] = arg0
+	return args, nil
+
+}
+
+func field_Query_deadlines_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 []int
+	if tmp, ok := rawArgs["days"]; ok {
+		var err error
+		var rawIf1 []interface{}
+		if tmp != nil {
+			if tmp1, ok := tmp.([]interface{}); ok {
+				rawIf1 = tmp1
+			} else {
+				rawIf1 = []interface{}{tmp}
+			}
+		}
+		arg0 = make([]int, len(rawIf1))
+		for idx1 := range rawIf1 {
+			arg0[idx1], err = graphql.UnmarshalInt(rawIf1[idx1])
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["days"] = arg0
+	return args, nil
+
+}
+
+func field_Query_content_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+
+}
+
+func field_Query_contentText_args(rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		var err error
+		arg0, err = graphql.UnmarshalString(tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 
 }
@@ -1392,6 +1503,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CircleMemo.UpdatedAt(childComplexity), true
 
+	case "Content.id":
+		if e.complexity.Content.Id == nil {
+			break
+		}
+
+		return e.complexity.Content.Id(childComplexity), true
+
+	case "Content.text":
+		if e.complexity.Content.Text == nil {
+			break
+		}
+
+		return e.complexity.Content.Text(childComplexity), true
+
+	case "Content.createdAt":
+		if e.complexity.Content.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Content.CreatedAt(childComplexity), true
+
+	case "Content.updatedAt":
+		if e.complexity.Content.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Content.UpdatedAt(childComplexity), true
+
 	case "Deadline.day":
 		if e.complexity.Deadline.Day == nil {
 			break
@@ -1412,6 +1551,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Deadline.UpdatedAt(childComplexity), true
+
+	case "Deadline.over":
+		if e.complexity.Deadline.Over == nil {
+			break
+		}
+
+		return e.complexity.Deadline.Over(childComplexity), true
 
 	case "Item.id":
 		if e.complexity.Item.Id == nil {
@@ -1740,6 +1886,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetDeadline(childComplexity, args["day"].(int), args["time"].(time.Time)), true
 
+	case "Mutation.setContent":
+		if e.complexity.Mutation.SetContent == nil {
+			break
+		}
+
+		args, err := field_Mutation_setContent_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetContent(childComplexity, args["id"].(string), args["text"].(string)), true
+
 	case "PriorityRank.circleId":
 		if e.complexity.PriorityRank.CircleId == nil {
 			break
@@ -1990,12 +2148,53 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Deadline(childComplexity, args["day"].(int)), true
 
+	case "Query.isDeadlineOver":
+		if e.complexity.Query.IsDeadlineOver == nil {
+			break
+		}
+
+		args, err := field_Query_isDeadlineOver_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.IsDeadlineOver(childComplexity, args["day"].(int)), true
+
 	case "Query.deadlines":
 		if e.complexity.Query.Deadlines == nil {
 			break
 		}
 
-		return e.complexity.Query.Deadlines(childComplexity), true
+		args, err := field_Query_deadlines_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Deadlines(childComplexity, args["days"].([]int)), true
+
+	case "Query.content":
+		if e.complexity.Query.Content == nil {
+			break
+		}
+
+		args, err := field_Query_content_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Content(childComplexity, args["id"].(string)), true
+
+	case "Query.contentText":
+		if e.complexity.Query.ContentText == nil {
+			break
+		}
+
+		args, err := field_Query_contentText_args(rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ContentText(childComplexity, args["id"].(string)), true
 
 	case "User.id":
 		if e.complexity.User.Id == nil {
@@ -3528,12 +3727,166 @@ func (ec *executionContext) _CircleMemo_updatedAt(ctx context.Context, field gra
 	return graphql.MarshalTime(res)
 }
 
+var contentImplementors = []string{"Content"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, obj *model.Content) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, contentImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Content")
+		case "id":
+			out.Values[i] = ec._Content_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "text":
+			out.Values[i] = ec._Content_text(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "createdAt":
+			out.Values[i] = ec._Content_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Content_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Content_id(ctx context.Context, field graphql.CollectedField, obj *model.Content) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Content",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Content_text(ctx context.Context, field graphql.CollectedField, obj *model.Content) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Content",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Text, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Content_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Content) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Content",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Content_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Content) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Content",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalTime(res)
+}
+
 var deadlineImplementors = []string{"Deadline"}
 
 // nolint: gocyclo, errcheck, gas, goconst
 func (ec *executionContext) _Deadline(ctx context.Context, sel ast.SelectionSet, obj *model.Deadline) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, deadlineImplementors)
 
+	var wg sync.WaitGroup
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
 	for i, field := range fields {
@@ -3557,11 +3910,20 @@ func (ec *executionContext) _Deadline(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "over":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Deadline_over(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-
+	wg.Wait()
 	if invalid {
 		return graphql.Null
 	}
@@ -3647,6 +4009,33 @@ func (ec *executionContext) _Deadline_updatedAt(ctx context.Context, field graph
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return graphql.MarshalTime(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Deadline_over(ctx context.Context, field graphql.CollectedField, obj *model.Deadline) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rctx := &graphql.ResolverContext{
+		Object: "Deadline",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Over(ctx)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalBoolean(res)
 }
 
 var itemImplementors = []string{"Item"}
@@ -4141,6 +4530,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalid = true
 			}
+		case "setContent":
+			out.Values[i] = ec._Mutation_setContent(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4875,6 +5266,41 @@ func (ec *executionContext) _Mutation_setDeadline(ctx context.Context, field gra
 	return graphql.MarshalTime(res)
 }
 
+// nolint: vetshadow
+func (ec *executionContext) _Mutation_setContent(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Mutation_setContent_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Mutation",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetContent(rctx, args["id"].(string), args["text"].(string))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Content)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._Content(ctx, field.Selections, res)
+}
+
 var priorityRankImplementors = []string{"PriorityRank"}
 
 // nolint: gocyclo, errcheck, gas, goconst
@@ -5230,10 +5656,34 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				wg.Done()
 			}(i, field)
+		case "isDeadlineOver":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_isDeadlineOver(ctx, field)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
 		case "deadlines":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Query_deadlines(ctx, field)
+				wg.Done()
+			}(i, field)
+		case "content":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_content(ctx, field)
+				wg.Done()
+			}(i, field)
+		case "contentText":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Query_contentText(ctx, field)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
 				wg.Done()
 			}(i, field)
 		case "__type":
@@ -6247,19 +6697,58 @@ func (ec *executionContext) _Query_deadline(ctx context.Context, field graphql.C
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _Query_deadlines(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+func (ec *executionContext) _Query_isDeadlineOver(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_isDeadlineOver_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
 	rctx := &graphql.ResolverContext{
 		Object: "Query",
-		Args:   nil,
+		Args:   args,
 		Field:  field,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Deadlines(rctx)
+		return ec.resolvers.Query().IsDeadlineOver(rctx, args["day"].(int))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalBoolean(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Query_deadlines(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_deadlines_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Deadlines(rctx, args["days"].([]int))
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -6305,6 +6794,74 @@ func (ec *executionContext) _Query_deadlines(ctx context.Context, field graphql.
 	}
 	wg.Wait()
 	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Query_content(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_content_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Content(rctx, args["id"].(string))
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Content)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._Content(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Query_contentText(ctx context.Context, field graphql.CollectedField) graphql.Marshaler {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() { ec.Tracer.EndFieldExecution(ctx) }()
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := field_Query_contentText_args(rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx := &graphql.ResolverContext{
+		Object: "Query",
+		Args:   args,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, nil, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ContentText(rctx, args["id"].(string))
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return graphql.MarshalString(res)
 }
 
 // nolint: vetshadow
@@ -9552,6 +10109,7 @@ type Deadline {
   day: Int!
   datetime: Time!
   updatedAt: Time!
+  over: Boolean!
 }
 
 type UserCirclePriority {
@@ -9578,6 +10136,13 @@ type PriorityRank {
   rank: Int!
 }
 
+type Content {
+  id: String!
+  text: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
 type Query {
   me: User
   myRequests: [UserRequestItem]
@@ -9601,7 +10166,11 @@ type Query {
   circlePriority(userId: Int!, day: Int!): UserCirclePriority
 
   deadline(day: Int!): Time!
-  deadlines: [Deadline]
+  isDeadlineOver(day: Int!): Boolean!
+  deadlines(days: [Int!] = null): [Deadline]
+
+  content(id: String!): Content
+  contentText(id: String!): String!
 }
 
 type Mutation {
@@ -9633,6 +10202,8 @@ type Mutation {
   deleteCircleMemo(id: Int!): Boolean!
 
   setDeadline(day: Int!, time: Time!): Time!
+
+  setContent(id: String!, text: String!): Content
 }
 `},
 )

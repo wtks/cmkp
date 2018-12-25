@@ -19,6 +19,16 @@ func (r *Resolver) Query() QueryResolver {
 
 type mutationResolver struct{ *Resolver }
 
+func (r *mutationResolver) SetContent(ctx context.Context, id string, text string) (*model.Content, error) {
+	if len(id) == 0 {
+		return nil, errors.New("id is required")
+	}
+	if model.IsGranted(ctx, getUserRole(ctx), model.RoleAdmin) {
+		return model.SetContent(ctx, id, text)
+	}
+	return nil, model.ErrForbidden
+}
+
 func (r *mutationResolver) SetCirclePriorities(ctx context.Context, day int, circleIds []int) (*model.UserCirclePriority, error) {
 	return model.SetUserCirclePriorities(ctx, getUserId(ctx), day, circleIds)
 }
@@ -232,6 +242,41 @@ func (r *mutationResolver) DeleteCircleMemo(ctx context.Context, id int) (bool, 
 
 type queryResolver struct{ *Resolver }
 
+func (r *queryResolver) Content(ctx context.Context, id string) (*model.Content, error) {
+	return model.GetContent(ctx, id)
+}
+
+func (r *queryResolver) ContentText(ctx context.Context, id string) (string, error) {
+	c, err := model.GetContent(ctx, id)
+	if err != nil {
+		return "", nil
+	}
+	return c.Text, nil
+}
+
+func (r *queryResolver) Deadlines(ctx context.Context, days []int) ([]*model.Deadline, error) {
+	if days == nil {
+		return model.GetDeadlines(ctx)
+	}
+
+	res := make([]*model.Deadline, len(days))
+	for i, v := range days {
+		dl, err := model.GetDeadline(ctx, v)
+		if err == nil {
+			res[i] = dl
+		}
+	}
+	return res, nil
+}
+
+func (r *queryResolver) IsDeadlineOver(ctx context.Context, day int) (bool, error) {
+	deadline, err := model.GetDeadline(ctx, day)
+	if err != nil {
+		return true, nil
+	}
+	return deadline.IsOver(), nil
+}
+
 func (r *queryResolver) UserRequestedCircles(ctx context.Context, userId int) ([]*model.Circle, error) {
 	if userId == getUserId(ctx) || model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
 		return model.GetRequestedCirclesByUser(ctx, userId)
@@ -271,10 +316,6 @@ func (r *queryResolver) Deadline(ctx context.Context, day int) (time.Time, error
 		return time.Time{}, err
 	}
 	return deadline.Datetime, nil
-}
-
-func (r *queryResolver) Deadlines(ctx context.Context) ([]*model.Deadline, error) {
-	return model.GetDeadlines(ctx)
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {

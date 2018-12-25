@@ -15,7 +15,7 @@
           v-card-title.headline.lighten-4(:class="[{'orange': circle.locationType === 1}, {'red': circle.locationType === 2}, {'green': circle.locationType === 0}]")
             router-link(:to="`/circles/${circle.id}`" style="text-decoration: none;") {{ circle.locationString }} {{ circle.name }}
           v-list
-            v-list-tile(v-for="request in circle.requests" :key="request.id" @click="openEditDialog(request.id)")
+            v-list-tile(v-for="request in circle.requests" :key="request.id" @click="openEditDialog(request)")
               v-list-tile-content
                 v-list-tile-title {{ request.item.name }}
                 v-list-tile-sub-title {{ request.item.price > -1 ? request.item.price + '円' : '価格未定' }} × {{ request.num }}個
@@ -126,7 +126,6 @@ export default {
       },
       selectedDay: '１日目',
       daySelectItems: ['企業', '１日目', '２日目', '３日目', '全日'],
-      requestMap: new Map(),
       requestCircleMap: new Map(),
       dialog: false,
       priorityDialog: false,
@@ -149,14 +148,12 @@ export default {
     requestedCircles: function () {
       const result = []
       this.requestCircleMap.clear()
-      this.requestMap.clear()
       for (const circle of this.fetchData.myRequestedCircles) {
         const c = Object.assign({}, circle)
         result.push(c)
         this.requestCircleMap.set(c.id, c)
       }
       for (const req of this.fetchData.myRequests) {
-        this.requestMap.set(req.id, req)
         const c = this.requestCircleMap.get(req.item.circleId)
         if (!c.requests) {
           c.requests = []
@@ -276,9 +273,7 @@ export default {
         return `${costs}円`
       }
     },
-    openEditDialog: function (reqId) {
-      const req = this.requestMap.get(reqId)
-      if (typeof req === 'undefined') return
+    openEditDialog: function (req) {
       this.editTarget = req
       this.editNum = req.num
       this.editPrice = req.item.price === -1 ? '' : req.item.price
@@ -332,7 +327,6 @@ export default {
         let i = 0
         while (circle.requests[i].id !== this.editTarget.id) i++
         circle.requests.splice(i, 1)
-        this.requestMap.delete(this.editTarget.id)
 
         this.dialog = false
       } catch (e) {
