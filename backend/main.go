@@ -52,6 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	orm.DB().SetMaxOpenConns(50)
 
 	ctx := context.WithValue(context.Background(), "orm", orm)
 	// init db data

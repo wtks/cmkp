@@ -6,7 +6,7 @@
           v-card-text
             span.caption {{ note.user.displayName }} - {{ datetimeString(note.updatedAt) }}
             br
-            span.body-1(style="white-space: pre-wrap;word-wrap: break-word;" v-text="note.content" v-linkified)
+            span.body-1.user-content-text(v-text="note.content" v-linkified)
 
 </template>
 
