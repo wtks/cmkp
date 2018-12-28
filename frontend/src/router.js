@@ -86,14 +86,6 @@ export default new Router({
               props: route => ({ userId: parseInt(route.params.id, 10) })
             },
             {
-              path: 'users/:id(\\d+)/create-request',
-              name: 'メンバーリクエスト作成',
-              component: () => import('./views/planning/CreateUserRequest'),
-              meta: {
-                backButton: true
-              }
-            },
-            {
               path: 'all-request-notes',
               name: '全リクエスト備考',
               component: () => import('./views/planning/AllRequestNote')

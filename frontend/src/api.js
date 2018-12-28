@@ -80,10 +80,6 @@ export default {
     deleteToken()
     initClient(null)
   },
-  getUserDisplayName: async (uid) => {
-    const res = await client.get(`/users/${uid}`)
-    return res.data.display_name
-  },
   searchCircles: async (query, days = [0, 1, 2, 3]) => {
     try {
       const res = await client.get('/circles', { params: { q: query, days: days.join(',') } })

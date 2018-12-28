@@ -1,0 +1,5 @@
+mutation ($cid: Int!, $name: String!, $price: Int!) {
+  createItem(circleId: $cid, name: $name, price: $price) {
+    id
+  }
+}

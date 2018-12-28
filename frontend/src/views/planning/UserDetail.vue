@@ -34,7 +34,7 @@
               v-card-title
                 span.headline リクエストリスト
               v-container(fluid grid-list-xs)
-                v-btn(block depressed color="primary" to="create-request" append) リクエスト追加
+                v-btn(block depressed color="primary" @click="addItemDialog.open = true" append) リクエスト追加
                 v-radio-group(v-model="filter.day" row)
                   v-radio(:label="`企業(${requestedCircleCounts[0]})`" :value="0")
                   v-radio(v-for="i in 3" :label="`${i}日目(${requestedCircleCounts[i]})`" :value="i" :key="i")
@@ -61,6 +61,22 @@
           v-btn(flat @click.native="editItemDialog.open = false" :disabled="editItemDialog.sending") キャンセル
           v-btn(flat color="red" @click.native="deleteRequest" :disabled="editItemDialog.sending" :loading="editItemDialog.deleting") 削除
           v-btn(flat color="primary" @click.native="editRequest" :disabled="editItemDialog.sending || !editItemDialog.valid" :loading="editItemDialog.editing") 修正
+    v-dialog(v-model="addItemDialog.open" persistent)
+      v-card
+        v-toolbar
+          v-btn(icon @click="addItemDialog.open = false")
+            v-icon close
+          v-toolbar-title {{ user.displayName }}のリクエストを追加
+          v-spacer
+          v-toolbar-items
+            v-btn(color="primary" :disabled="!addItemDialog.valid || addItemDialog.sending" :loading="addItemDialog.sending") 登録
+        v-card-text
+          v-form(v-model="addItemDialog.valid")
+            v-autocomplete(hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" label="サークル選択" return-object placeholder="サークル名または作家名を入力" :items="searchCircles" v-model="addItemDialog.circle" :loading="$apollo.queries.searchCircles.loading" :search-input.sync="addItemDialog.query" clearable required :rules="[rules.required]")
+            v-select(v-model="addItemDialog.selectedItem" :items="selectableCircleItems" label="商品名を選択" hint="希望の商品が無い場合は新規登録を選んでください" persistent-hint return-object single-line item-text="name" item-value="id" :loading="$apollo.queries.circleItems.loading")
+            v-text-field(v-model="addItemDialog.name" label="商品名を入力" hint="曖昧な商品名を入力しないでください。また複数の商品を一つにまとめて登録しないでください。(OK：新刊A, NG：新刊AとB)" required :rules="[rules.required]" maxLength="100" counter persistent-hint :disabled="addItemDialog.selectedItem == null || !isNewItem")
+            v-text-field(v-model.number="addItemDialog.price" label="単体価格" hint="決定していない場合は空欄にしてください" type="number" min="0" max="50000" persistent-hint :disabled="addItemDialog.selectedItem == null")
+            v-text-field(v-model.number="addItemDialog.num" label="個数" type="number" min="1" max="99" required :rules="[rules.required]" :disabled="addItemDialog.selectedItem == null")
 
 </template>
 
@@ -70,6 +86,8 @@ import dayjs from 'dayjs'
 import updateItemPrice from '../../gql/updateItemPrice.gql'
 import changeRequestNum from '../../gql/changeRequestNum.gql'
 import deleteRequest from '../../gql/deleteRequest.gql'
+import createItem from '../../gql/createItem.graphql'
+import createRequest from '../../gql/createRequest.gql'
 import CirclePriorityList from '../../components/CirclePriorityList'
 
 const getData = gql`
@@ -130,6 +148,27 @@ const getData = gql`
   }
 `
 
+const searchCircles = gql`
+  query ($q: String!) {
+    searchCircles: circles(q: $q) {
+      id
+      name
+      author
+      locationString(day: true)
+    }
+  }
+`
+
+const getCircleItems = gql`
+  query ($cid: Int!) {
+    circleItems: items(circleId: $cid) {
+      id
+      name
+      price
+    }
+  }
+`
+
 export default {
   name: 'UserDetail',
   components: {
@@ -176,6 +215,19 @@ export default {
         num: 1,
         valid: false
       },
+      addItemDialog: {
+        open: false,
+        sending: false,
+        valid: false,
+        circle: null,
+        selectedItem: null,
+        query: '',
+        name: '',
+        price: '',
+        num: 1
+      },
+      searchCircles: [],
+      circleItems: [],
       rules: {
         required: value => !!value || '必須項目です'
       }
@@ -205,6 +257,32 @@ export default {
         x[y.day]++
         return x
       }, [0, 0, 0, 0])
+    },
+    selectableCircleItems: function () {
+      return [{
+        name: '新規登録',
+        id: null
+      }, ...this.circleItems]
+    },
+    isNewItem: function () {
+      return this.addItemDialog.selectedItem != null && this.addItemDialog.selectedItem.id == null
+    }
+  },
+  watch: {
+    'addItemDialog.selectedItem': function () {
+      if (!this.addItemDialog.selectedItem) return
+      if (this.isNewItem) {
+        this.addItemDialog.name = ''
+        this.addItemDialog.price = ''
+        this.addItemDialog.num = 1
+      } else {
+        this.addItemDialog.name = this.addItemDialog.selectedItem.name
+        this.addItemDialog.price = this.addItemDialog.selectedItem.price >= 0 ? this.addItemDialog.selectedItem.price : ''
+        this.addItemDialog.num = 1
+      }
+    },
+    'circleItems': function () {
+      this.addItemDialog.selectedItem = null
     }
   },
   apollo: {
@@ -217,25 +295,84 @@ export default {
         }
       },
       update: data => data
+    },
+    searchCircles: {
+      query: searchCircles,
+      variables: function () {
+        return {
+          q: this.addItemDialog.query || ''
+        }
+      },
+      debounce: 500,
+      skip: function () {
+        return this.addItemDialog.query === '' || this.addItemDialog.circle != null
+      }
+    },
+    circleItems: {
+      query: getCircleItems,
+      variables: function () {
+        return {
+          cid: this.addItemDialog.circle.id
+        }
+      },
+      skip: function () {
+        return this.addItemDialog.circle == null
+      }
     }
   },
   methods: {
-    priceString: function (p) {
-      if (p >= 0) {
-        return p + '円'
-      } else {
-        return '価格未定'
-      }
-    },
-    formatDatetime: function (dt) {
-      return dayjs(dt).fromNow()
-    },
+    priceString: p => p >= 0 ? `${p}円` : '価格未定',
+    formatDatetime: dt => dayjs(dt).fromNow(),
     onItemClicked: function (circle, item) {
       this.editItemDialog.origCircle = circle
       this.editItemDialog.origItem = item
       this.editItemDialog.price = item.price === -1 ? '' : item.price
       this.editItemDialog.num = item.request.num
       this.editItemDialog.open = true
+    },
+    createRequest: async function () {
+      this.addItemDialog.sending = true
+      try {
+        let itemId
+        if (this.isNewItem) {
+          itemId = this.addItemDialog.selectedItem.id
+          if (this.addItemDialog.price !== this.addItemDialog.selectedItem.price) {
+            await this.$apollo.mutate({
+              mutation: updateItemPrice,
+              variables: {
+                id: itemId,
+                price: this.addItemDialog.price !== '' ? this.addItemDialog.price : -1
+              }
+            })
+          }
+        } else {
+          itemId = (await this.$apollo.mutate({
+            mutation: createItem,
+            variables: {
+              cid: this.addItemDialog.circle.id,
+              name: this.addItemDialog.name,
+              price: this.addItemDialog.price !== '' ? this.addItemDialog.price : -1
+            }
+          })).data.createItem.id
+        }
+
+        await this.$apollo.mutate({
+          mutation: createRequest,
+          variables: {
+            userId: this.userId,
+            itemId: itemId,
+            num: this.addItemDialog.num
+          }
+        })
+        this.$apollo.queries.fetchData.refetch()
+      } catch (e) {
+        console.error(e)
+        this.$bus.$emit('error')
+      }
+      this.addItemDialog.circle = null
+      this.addItemDialog.selectedItem = null
+      this.addItemDialog.open = false
+      this.addItemDialog.sending = false
     },
     editRequest: async function () {
       this.editItemDialog.sending = true

@@ -8586,7 +8586,7 @@ thread-loader@^1.2.0:
     loader-runner "^2.3.0"
     loader-utils "^1.1.0"
 
-throttle-debounce@^2.0.0, throttle-debounce@^2.0.1:
+throttle-debounce@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/throttle-debounce/-/throttle-debounce-2.0.1.tgz#7307ddd6cd9acadb349132fbf6c18d78c88a5e62"
 
@@ -9029,11 +9029,6 @@ vue-apollo@^3.0.0-beta.11:
   dependencies:
     chalk "^2.4.1"
     throttle-debounce "^2.0.0"
-
-vue-async-computed@^3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/vue-async-computed/-/vue-async-computed-3.5.0.tgz#30657970618389f30cba4d4b52b119bb1b2976aa"
-  integrity sha512-QddDtWshkGeORKiONQ7xnz8YoBwLU1ZejmPTdEnVLXVeGthmmdl2uKt9RRMB3NRyXKkUcT6WYKT/YDnNodzF1w==
 
 vue-bus@^1.2.0:
   version "1.2.0"

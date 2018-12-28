@@ -21,7 +21,9 @@
           v-card-title.headline.lighten-4(:class="[{'orange': circle.locationType === 1}, {'red': circle.locationType === 2}, {'green': circle.locationType === 0}]")
             router-link(:to="`/circles/${circle.id}`" style="text-decoration: none;") {{ circle.locationString }} {{ circle.name }}
           v-card-text.blue-grey.lighten-5(v-if="circle.prioritized.length > 0")
-            div(v-for="p in circle.prioritized" :key="p.userId") 第{{p.rank}}希望：{{ p.user.displayName }}
+            div(v-for="p in circle.prioritized" :key="p.userId")
+              | 第{{p.rank}}希望：
+              router-link(:to="`users/${p.userId}`") {{ p.user.displayName }}
           v-divider
           v-list(three-line)
             v-list-tile(v-for="item in circle.requestedItems" :key="item.id")
@@ -30,7 +32,9 @@
                 v-list-tile-sub-title {{ priceString(item.price) }} × 計{{ requestedNum(item.requests) }}個
                 v-list-tile-sub-title
                   span(v-for="(request, idx) in item.requests" :key="request.id")
-                    span {{ request.user.displayName }}({{ request.num }})
+                    span
+                      router-link(:to="`users/${request.userId}`") {{ request.user.displayName }}
+                      | ({{ request.num }})
                     template(v-if="idx !== item.requests.length - 1") ,&nbsp;
 </template>
 

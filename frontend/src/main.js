@@ -1,6 +1,5 @@
 import '@babel/polyfill'
 import Vue from 'vue'
-import AsyncComputed from 'vue-async-computed'
 import linkify from 'vue-linkify'
 import VueBus from 'vue-bus'
 import './vuetify'
@@ -18,7 +17,6 @@ dayjs.extend(relativeTime)
 
 Vue.config.productionTip = false
 
-Vue.use(AsyncComputed)
 Vue.use(VueBus)
 Vue.directive('linkified', linkify)
 

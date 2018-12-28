@@ -18,6 +18,7 @@
 
 <script>
 import gql from 'graphql-tag'
+import createItem from '../gql/createItem.graphql'
 import createRequest from '../gql/createRequest.gql'
 import updateItemPrice from '../gql/updateItemPrice.gql'
 import CircleDetailInfo from '../components/CircleDetailInfo'
@@ -43,14 +44,6 @@ const getData = gql`
       id
       name
       price
-    }
-  }
-`
-
-const createItem = gql`
-  mutation ($cid: Int!, $name: String!, $price: Int!) {
-    createItem(circleId: $cid, name: $name, price: $price) {
-      id
     }
   }
 `
