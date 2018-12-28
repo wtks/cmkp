@@ -16,7 +16,7 @@
         v-checkbox(label="シャッター" v-model="filter.shutter")
 
     v-layout(row wrap)
-      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id")
+      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id" :id="`list-circle-${circle.id}`")
         v-card
           v-card-title.headline.lighten-4(:class="[{'orange': circle.locationType === 1}, {'red': circle.locationType === 2}, {'green': circle.locationType === 0}]")
             router-link(:to="`/circles/${circle.id}`" style="text-decoration: none;") {{ circle.locationString }} {{ circle.name }}
@@ -36,6 +36,18 @@
                       router-link(:to="`users/${request.userId}`") {{ request.user.displayName }}
                       | ({{ request.num }})
                     template(v-if="idx !== item.requests.length - 1") ,&nbsp;
+    v-dialog(v-model="jumpDialog")
+      v-card
+        v-card-title.headline ジャンプ
+        v-card-text
+          v-autocomplete(hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" return-object placeholder="サークル名または作家名を入力" :items="filteredRequests" v-model="jumpSelectedCircle")
+        v-card-actions
+          v-spacer
+          v-btn(flat @click="jumpCircle") ジャンプ
+    v-fade-transition
+      v-btn(fixed dark fab bottom right color="blue darken-2" @click="jumpSelectedCircle = null; jumpDialog = true")
+        v-icon navigation
+
 </template>
 
 <script>
@@ -86,7 +98,9 @@ export default {
         normal: true,
         wall: true,
         shutter: true
-      }
+      },
+      jumpDialog: false,
+      jumpSelectedCircle: null
     }
   },
   apollo: {
@@ -129,15 +143,13 @@ export default {
     }
   },
   methods: {
-    priceString: function (p) {
-      if (p >= 0) {
-        return p + '円'
-      } else {
-        return '価格未定'
+    priceString: p => p >= 0 ? `${p}円` : '価格未定',
+    requestedNum: requests => requests.reduce((x, y) => x + y.num, 0),
+    jumpCircle () {
+      this.jumpDialog = false
+      if (this.jumpSelectedCircle) {
+        this.$vuetify.goTo(`#list-circle-${this.jumpSelectedCircle.id}`, { offset: -70 })
       }
-    },
-    requestedNum: function (requests) {
-      return requests.reduce((x, y) => x + y.num, 0)
     }
   }
 }
