@@ -14,11 +14,11 @@ const getToken = () => localStorage.getItem('api_token')
 const deleteToken = () => localStorage.removeItem('api_token')
 const saveToken = (token) => localStorage.setItem('api_token', token)
 
-let baseUrl = '/api/'
+let baseUrl
 if (process.env.NODE_ENV === 'production') {
   baseUrl = process.env.VUE_APP_API_ENDPOINT + '/api/'
 } else {
-  baseUrl = 'http://localhost:3000/api/'
+  baseUrl = process.env.VUE_APP_API_ENDPOINT + '/api/' || 'http://localhost:3000/api/'
 }
 
 const { apolloClient, wsClient } = createApolloClient({
@@ -79,52 +79,5 @@ export default {
   logout: () => {
     deleteToken()
     initClient(null)
-  },
-  searchCircles: async (query, days = [0, 1, 2, 3]) => {
-    try {
-      const res = await client.get('/circles', { params: { q: query, days: days.join(',') } })
-      return res.data
-    } catch (e) {
-      return []
-    }
-  },
-  getCircleItems: async (cid) => {
-    const res = await client.get(`/circles/${cid}/items`)
-    return res.data
-  },
-  createCircleItem: async (cid, name, price) => {
-    if (price == null || price === '') {
-      price = -1
-    }
-    const res = await client.post('/items', {
-      circle_id: cid,
-      name: name,
-      price: price
-    })
-    return res.data
-  },
-  patchCircleItemPrice: async (id, price) => {
-    if (price == null || price === '') {
-      price = -1
-    }
-    await client.patch(`/items/${id}/price`, {
-      price: price
-    })
-  },
-  createRequest: async (userId, itemId, num) => {
-    const res = await client.post('/requests', {
-      user_id: userId,
-      item_id: itemId,
-      num: num
-    })
-    return res.data
-  },
-  editRequest: async (rid, num) => {
-    await client.patch(`/requests/${rid}`, {
-      num: num
-    })
-  },
-  deleteRequest: async (rid) => {
-    await client.delete(`/requests/${rid}`)
   }
 }

@@ -18,6 +18,7 @@ import {
   VIcon,
   VList,
   VNavigationDrawer,
+  VProgressLinear,
   VRadioGroup,
   VSelect,
   VSpeedDial,
@@ -57,6 +58,7 @@ Vue.use(Vuetify, {
     VSubheader,
     VAutocomplete,
     VSpeedDial,
+    VProgressLinear,
     VAlert,
     transitions
   },

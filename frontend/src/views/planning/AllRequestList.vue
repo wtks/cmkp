@@ -15,14 +15,15 @@
         v-autocomplete(label="ジャンプ" hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" clearable return-object placeholder="サークル名または作家名を入力" :items="filteredRequests" v-model="jumpSelectedCircle" append-outer-icon="navigation" @click:append-outer="jumpCircle")
 
     v-layout(row wrap)
-      v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id" :id="`list-circle-${circle.id}`")
+      v-progress-linear(v-if="$apollo.queries.fetchData.loading" indeterminate)
+      v-flex(v-else xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id" :id="`list-circle-${circle.id}`")
         v-card
           v-card-title.headline.lighten-4(:class="[{'orange': circle.locationType === 1}, {'red': circle.locationType === 2}, {'green': circle.locationType === 0}]")
             router-link(:to="`/circles/${circle.id}`" style="text-decoration: none;") {{ circle.locationString }} {{ circle.name }}
           v-card-text.blue-grey.lighten-5(v-if="circle.prioritized.length > 0")
             div(v-for="p in circle.prioritized" :key="p.userId")
               | 第{{p.rank}}希望：
-              router-link(:to="`users/${p.userId}`") {{ p.user.displayName }}
+              router-link(:to="`/planning/users/${p.userId}`") {{ p.user.displayName }}
           v-divider
           v-list(three-line)
             v-list-tile(v-for="item in circle.requestedItems" :key="item.id")
@@ -32,7 +33,7 @@
                 v-list-tile-sub-title
                   span(v-for="(request, idx) in item.requests" :key="request.id")
                     span
-                      router-link(:to="`users/${request.userId}`") {{ request.user.displayName }}
+                      router-link(:to="`/planning/users/${request.userId}`") {{ request.user.displayName }}
                       | ({{ request.num }})
                     template(v-if="idx !== item.requests.length - 1") ,&nbsp;
     v-fade-transition
