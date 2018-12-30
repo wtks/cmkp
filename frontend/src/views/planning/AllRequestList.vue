@@ -14,6 +14,8 @@
         v-checkbox(label="壁" v-model="filter.wall")
       v-flex
         v-checkbox(label="シャッター" v-model="filter.shutter")
+      v-flex(xs12 sm12)
+        v-autocomplete(label="ジャンプ" hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" clearable return-object placeholder="サークル名または作家名を入力" :items="filteredRequests" v-model="jumpSelectedCircle" append-outer-icon="navigation" :append-outer-icon-cb="jumpCircle")
 
     v-layout(row wrap)
       v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id" :id="`list-circle-${circle.id}`")
@@ -36,17 +38,9 @@
                       router-link(:to="`users/${request.userId}`") {{ request.user.displayName }}
                       | ({{ request.num }})
                     template(v-if="idx !== item.requests.length - 1") ,&nbsp;
-    v-dialog(v-model="jumpDialog")
-      v-card
-        v-card-title.headline ジャンプ
-        v-card-text
-          v-autocomplete(hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" return-object placeholder="サークル名または作家名を入力" :items="filteredRequests" v-model="jumpSelectedCircle")
-        v-card-actions
-          v-spacer
-          v-btn(flat @click="jumpCircle") ジャンプ
     v-fade-transition
-      v-btn(fixed dark fab bottom right color="blue darken-2" @click="jumpSelectedCircle = null; jumpDialog = true")
-        v-icon navigation
+      v-btn(fixed dark fab bottom right color="blue darken-2" @click="$vuetify.goTo(0)")
+        v-icon arrow_upward
 
 </template>
 
@@ -99,7 +93,6 @@ export default {
         wall: true,
         shutter: true
       },
-      jumpDialog: false,
       jumpSelectedCircle: null
     }
   },
@@ -146,10 +139,7 @@ export default {
     priceString: p => p >= 0 ? `${p}円` : '価格未定',
     requestedNum: requests => requests.reduce((x, y) => x + y.num, 0),
     jumpCircle () {
-      this.jumpDialog = false
-      if (this.jumpSelectedCircle) {
-        this.$vuetify.goTo(`#list-circle-${this.jumpSelectedCircle.id}`, { offset: -70 })
-      }
+      if (this.jumpSelectedCircle) this.$vuetify.goTo(`#list-circle-${this.jumpSelectedCircle.id}`, { offset: -70 })
     }
   }
 }
