@@ -4,7 +4,9 @@
       v-flex(xs12 v-for="note in notes" :key="note.id")
         v-card
           v-card-text
-            span.caption {{ note.user.displayName }} - {{ datetimeString(note.updatedAt) }}
+            span.caption
+              router-link(:to="`/planning/users/${note.user.id}`") {{ note.user.displayName }}
+              | &nbsp;- {{ datetimeString(note.updatedAt) }}
             br
             span.body-1.user-content-text(v-text="note.content" v-linkified)
 

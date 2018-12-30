@@ -3,6 +3,5 @@ module.exports = {
     proxy: 'http://localhost:3000',
     disableHostCheck: true
   },
-
   pluginOptions: undefined
 }
