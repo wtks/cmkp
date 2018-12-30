@@ -24,6 +24,11 @@ export default new Router({
           component: () => import('./views/Home.vue')
         },
         {
+          path: 'changePassword',
+          name: 'パスワード変更',
+          component: () => import('./views/ChangeMyPassword.vue')
+        },
+        {
           path: 'circles',
           name: 'サークル検索',
           component: () => import('./views/SearchCircle')

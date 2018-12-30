@@ -7,7 +7,7 @@
             v-icon person
           v-list-tile-content
             v-list-tile-title {{ myName }}
-        v-list-tile(@click="passwordDialog.open = true")
+        v-list-tile(to="/changePassword")
           v-list-tile-action
             v-icon vpn_key
           v-list-tile-content
@@ -93,18 +93,6 @@
     v-footer(app)
       span cmkp &copy; wtks 2018
     error-dialog
-    v-dialog(v-model="passwordDialog.open" persistent width=500)
-      v-card
-        v-card-title パスワード変更
-        v-card-text
-          v-form(v-model="passwordDialog.valid" lazy-validation)
-            v-text-field(v-model="passwordDialog.oldPassword" :rules="[rules.password]" label="現在のパスワード" type="password" required)
-            v-text-field(v-model="passwordDialog.newPassword" :rules="[rules.password]" label="新しいパスワード" type="password" required)
-            v-text-field(v-model="passwordDialog.confirmPassword" :rules="[rules.confirmPassword]" label="新しいパスワード(確認)" type="password" required)
-        v-card-actions
-          v-spacer
-          v-btn(flat @click="passwordDialog.open = false") キャンセル
-          v-btn(flat color="primary" :disabled="!passwordDialog.valid || passwordDialog.loading" :loading="passwordDialog.loading" @click.native="changePassword") 変更
 </template>
 
 <script>
@@ -112,12 +100,6 @@ import gql from 'graphql-tag'
 import api from './api'
 import { mapGetters } from 'vuex'
 import ErrorDialog from './components/ErrorDialog'
-
-const changePassword = gql`
-  mutation ($old: String!, $new: String!) {
-    changePassword(oldPassword: $old, newPassword: $new)
-  }
-`
 
 const getRole = gql`
   query {
@@ -135,18 +117,6 @@ export default {
   data () {
     return {
       drawer: false,
-      passwordDialog: {
-        open: false,
-        valid: false,
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-        loading: false
-      },
-      rules: {
-        password: value => /^[a-zA-Z0-9!#$%&()*+,.:;=?@[\]^_{}-]+$/.test(value) || 'パスワードは半角英数文字と記号のみ使えます',
-        confirmPassword: value => this.passwordDialog.newPassword === value || '新しいパスワードを正しく入力してください'
-      },
       userRole: null
     }
   },
@@ -199,25 +169,6 @@ export default {
     logout: function () {
       api.logout()
       location.reload(true)
-    },
-    changePassword: async function () {
-      this.passwordDialog.loading = true
-      try {
-        await this.$apollo.mutate({
-          mutation: changePassword,
-          variables: {
-            old: this.passwordDialog.oldPassword,
-            new: this.passwordDialog.newPassword
-          }
-        })
-        this.passwordDialog.oldPassword = ''
-        this.passwordDialog.newPassword = ''
-        this.passwordDialog.open = false
-      } catch (e) {
-        this.$bus.$emit('error', e.graphQLErrors[0].message)
-      } finally {
-        this.passwordDialog.loading = false
-      }
     }
   }
 }

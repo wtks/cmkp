@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import {
   transitions,
+  VAlert,
   VApp,
   VAutocomplete,
   VBtn,
@@ -56,6 +57,7 @@ Vue.use(Vuetify, {
     VSubheader,
     VAutocomplete,
     VSpeedDial,
+    VAlert,
     transitions
   },
   directives: {
