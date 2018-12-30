@@ -40,11 +40,24 @@
             v-list-tile-title リクエスト備考
         template(v-if="isPlanner")
           v-divider
-          v-list-tile(to="/planning/all-requests")
-            v-list-tile-action
-              v-icon library_books
-            v-list-tile-content
-              v-list-tile-title 全リクエストリスト
+          v-list-group(no-action)
+            v-list-tile(slot="activator")
+              v-list-tile-action
+                v-icon library_books
+              v-list-tile-content
+                v-list-tile-title 全リクエストリスト
+            v-list-tile(to="/planning/all-requests/0")
+              v-list-tile-content
+                v-list-tile-title 企業
+            v-list-tile(to="/planning/all-requests/1")
+              v-list-tile-content
+                v-list-tile-title 1日目
+            v-list-tile(to="/planning/all-requests/2")
+              v-list-tile-content
+                v-list-tile-title 2日目
+            v-list-tile(to="/planning/all-requests/3")
+              v-list-tile-content
+                v-list-tile-title 3日目
           v-list-tile(to="/planning/all-request-notes")
             v-list-tile-action
               v-icon library_books

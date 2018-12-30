@@ -1,13 +1,10 @@
 <template lang="pug">
   v-container(fluid grid-list-md)
+    div.headline
+      template(v-if="day === 0") 企業
+      template(v-else) {{ day }}日目
     span {{ filteredRequestedCircleCount }}サークル (壁:{{filteredRequestedWallCircleCount}}, シャッター:{{filteredRequestedShutterCircleCount}})
     v-layout(row wrap)
-      v-flex
-        v-radio-group(v-model="filter.day" row)
-          v-radio(label="企業" :value="0")
-          v-radio(label="1日目" :value="1")
-          v-radio(label="2日目" :value="2")
-          v-radio(label="3日目" :value="3")
       v-flex
         v-checkbox(label="通常" v-model="filter.normal")
       v-flex
@@ -15,7 +12,7 @@
       v-flex
         v-checkbox(label="シャッター" v-model="filter.shutter")
       v-flex(xs12 sm12)
-        v-autocomplete(label="ジャンプ" hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" clearable return-object placeholder="サークル名または作家名を入力" :items="filteredRequests" v-model="jumpSelectedCircle" append-outer-icon="navigation" :append-outer-icon-cb="jumpCircle")
+        v-autocomplete(label="ジャンプ" hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" clearable return-object placeholder="サークル名または作家名を入力" :items="filteredRequests" v-model="jumpSelectedCircle" append-outer-icon="navigation" @click:append-outer="jumpCircle")
 
     v-layout(row wrap)
       v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id" :id="`list-circle-${circle.id}`")
@@ -48,8 +45,8 @@
 import gql from 'graphql-tag'
 
 const getData = gql`
-  query {
-    requestedCircles {
+  query($day: Int!) {
+    requestedCircles(day: $day) {
       id
       name
       author
@@ -82,13 +79,18 @@ const getData = gql`
 
 export default {
   name: 'AllRequestList',
+  props: {
+    day: {
+      type: Number,
+      default: 0
+    }
+  },
   data: function () {
     return {
       fetchData: {
         requestedCircles: []
       },
       filter: {
-        day: 1,
         normal: true,
         wall: true,
         shutter: true
@@ -100,6 +102,11 @@ export default {
     fetchData: {
       query: getData,
       fetchPolicy: 'cache-and-network',
+      variables: function () {
+        return {
+          day: this.day
+        }
+      },
       update: data => data
     }
   },
@@ -107,10 +114,6 @@ export default {
     filteredRequests: function () {
       return this.fetchData.requestedCircles.filter(v => {
         let ok = true
-        if (this.filter.day != null) {
-          ok = v.day === this.filter.day
-        }
-        if (!ok) return false
         switch (v.locationType) {
           case 0:
             ok = this.filter.normal
@@ -136,7 +139,7 @@ export default {
     }
   },
   methods: {
-    priceString: p => p >= 0 ? `${p}円` : '価格未定',
+    priceString: p => p >= 0 ? `${p}円` : '価格未登録',
     requestedNum: requests => requests.reduce((x, y) => x + y.num, 0),
     jumpCircle () {
       if (this.jumpSelectedCircle) this.$vuetify.goTo(`#list-circle-${this.jumpSelectedCircle.id}`, { offset: -70 })

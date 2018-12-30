@@ -321,7 +321,7 @@ export default {
     }
   },
   methods: {
-    priceString: p => p >= 0 ? `${p}円` : '価格未定',
+    priceString: p => p >= 0 ? `${p}円` : '価格未登録',
     formatDatetime: dt => dayjs(dt).fromNow(),
     onItemClicked: function (circle, item) {
       this.editItemDialog.origCircle = circle

@@ -67,9 +67,10 @@ export default new Router({
           component: Root,
           children: [
             {
-              path: 'all-requests',
+              path: 'all-requests/:day(\\d+)',
               name: '全リクエスト一覧',
-              component: () => import('./views/planning/AllRequestList')
+              component: () => import('./views/planning/AllRequestList'),
+              props: route => ({ day: parseInt(route.params.day, 10) })
             },
             {
               path: 'users',
