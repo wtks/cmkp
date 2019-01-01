@@ -96,18 +96,9 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
 import api from './api'
 import { mapGetters } from 'vuex'
 import ErrorDialog from './components/ErrorDialog'
-
-const getRole = gql`
-  query {
-    me {
-      role
-    }
-  }
-`
 
 export default {
   name: 'App',
@@ -142,32 +133,16 @@ export default {
       }
       return false
     },
-    isAdmin: function () {
-      return this.userRole === 'ADMIN'
-    },
-    isPlanner: function () {
-      return this.userRole === 'ADMIN' || this.userRole === 'PLANNER'
-    },
     ...mapGetters([
       'myName',
-      'loggedIn'
+      'loggedIn',
+      'isAdmin',
+      'isPlanner'
     ])
   },
-  apollo: {
-    userRole: {
-      query: getRole,
-      fetchPolicy: 'network-only',
-      update: data => data.me ? data.me.role : null
-    }
-  },
-  watch: {
-    userRole: function (v) {
-      this.$store.commit('setRole', v)
-    }
-  },
   methods: {
-    logout: function () {
-      api.logout()
+    logout: async function () {
+      await api.logout()
       location.reload(true)
     }
   }

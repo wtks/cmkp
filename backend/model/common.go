@@ -27,6 +27,7 @@ var (
 		&Deadline{},
 		&UserCirclePriority{},
 		&Content{},
+		&UserEntry{},
 	}
 	usernameRegex = regexp.MustCompile("^[0-9a-zA-Z_-]{1,20}$")
 	ErrForbidden  = errors.New("forbidden")
@@ -109,4 +110,23 @@ func hashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(hash), err
+}
+
+func transact(db *gorm.DB, txFunc func(tx *gorm.DB) error) (err error) {
+	tx := db.Begin()
+	if err := tx.Error; err != nil {
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+	err = txFunc(tx)
+	return err
 }

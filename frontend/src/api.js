@@ -6,6 +6,7 @@ import VueApollo from 'vue-apollo'
 import { createApolloClient } from 'vue-cli-plugin-apollo/graphql-client'
 import store from './store'
 import { onLogin, onLogout } from './vue-apollo'
+import getRole from './gql/getRole.graphql'
 
 Vue.use(VueApollo)
 localforage.config({ name: 'cmkp' })
@@ -31,28 +32,35 @@ const { apolloClient, wsClient } = createApolloClient({
 apolloClient.wsClient = wsClient
 
 let client
-const initClient = (token) => {
+const initClient = async (token) => {
   if (token) {
     const decoded = jwtDecode(token)
     store.commit('setUserId', parseInt(decoded.sub, 10))
     store.commit('setName', decoded.aud)
+
     client = axios.create({
       baseURL: baseUrl,
       headers: {
         'Authorization': 'Bearer ' + token
       }
     })
-    onLogin(apolloClient)
+    await onLogin(apolloClient)
+    const { data } = await apolloClient.query({
+      query: getRole,
+      fetchPolicy: 'network-only'
+    })
+    store.commit('setRole', data.me.role)
   } else {
     client = axios.create({
       baseURL: baseUrl
     })
-    onLogout(apolloClient)
+    await onLogout(apolloClient)
   }
 }
 
 initClient(getToken())
 export default {
+  apolloClient,
   apolloProvider: () =>
     new VueApollo({
       defaultClient: apolloClient,
@@ -74,10 +82,10 @@ export default {
     const token = res.data.token
 
     saveToken(token)
-    initClient(token)
+    await initClient(token)
   },
-  logout: () => {
+  logout: async () => {
     deleteToken()
-    initClient(null)
+    await initClient(null)
   }
 }

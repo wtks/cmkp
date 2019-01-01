@@ -48,12 +48,12 @@ func createItemLoader(ctx context.Context) *ItemLoader {
 }
 
 type Item struct {
-	ID        int       `gorm:"primary_key"                                     json:"id"`
-	CircleID  int       `gorm:"unique_index:circle_item_name"                   json:"circleId"`
-	Name      string    `gorm:"type:varchar(100);unique_index:circle_item_name" json:"name"`
-	Price     int       `                                                       json:"price"`
-	CreatedAt time.Time `gorm:"precision:6"                                     json:"createdAt"`
-	UpdatedAt time.Time `gorm:"precision:6"                                     json:"updatedAt"`
+	ID        int       `gorm:"primary_key"`
+	CircleID  int       `gorm:"unique_index:circle_item_name"`
+	Name      string    `gorm:"type:varchar(100);unique_index:circle_item_name"`
+	Price     int       ``
+	CreatedAt time.Time `gorm:"precision:6"`
+	UpdatedAt time.Time `gorm:"precision:6"`
 }
 
 func (i *Item) Circle(ctx context.Context) (*Circle, error) {

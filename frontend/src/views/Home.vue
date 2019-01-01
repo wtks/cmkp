@@ -72,13 +72,12 @@ export default {
   apollo: {
     fetchData: {
       query: getMe,
-      update: data => data
+      update: data => data,
+      fetchPolicy: 'network-only'
     }
   },
   methods: {
-    formatDatetime (dt) {
-      return dayjs(dt).format('YYYY/MM/DD HH:mm:ss')
-    }
+    formatDatetime: dt => dayjs(dt).format('YYYY/MM/DD HH:mm:ss')
   }
 }
 </script>

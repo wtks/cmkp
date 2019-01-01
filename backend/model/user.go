@@ -49,39 +49,38 @@ func createUserLoader(ctx context.Context) *UserLoader {
 }
 
 type User struct {
-	ID                int    `gorm:"primary_key"`
-	Name              string `gorm:"type:varchar(20);unique"`
-	DisplayName       string `gorm:"type:varchar(30)"`
-	EncryptedPassword string `gorm:"type:text"`
-	Role              Role   `gorm:"type:varchar(10)"`
-	EntryDay1         bool
-	EntryDay2         bool
-	EntryDay3         bool
+	ID                int       `gorm:"primary_key"`
+	Name              string    `gorm:"type:varchar(20);unique"`
+	DisplayName       string    `gorm:"type:varchar(30)"`
+	EncryptedPassword string    `gorm:"type:text"`
+	Role              Role      `gorm:"type:varchar(10)"`
 	CreatedAt         time.Time `gorm:"precision:6"`
 	UpdatedAt         time.Time `gorm:"precision:6"`
 }
 
-func (u *User) Entry(day int) bool {
-	switch day {
-	case 1:
-		return u.EntryDay1
-	case 2:
-		return u.EntryDay2
-	case 3:
-		return u.EntryDay3
-	default:
-		return false
+func (u *User) Entry(ctx context.Context, day int) (bool, error) {
+	days, err := u.EntryDays(ctx)
+	if err != nil {
+		return false, err
 	}
-}
-
-func (u *User) EntryDays() []int {
-	result := make([]int, 0)
-	for i := 1; i <= 3; i++ {
-		if u.Entry(i) {
-			result = append(result, i)
+	for i := range days {
+		if days[i] == day {
+			return true, nil
 		}
 	}
-	return result
+	return false, nil
+}
+
+func (u *User) EntryDays(ctx context.Context) ([]int, error) {
+	result := make([]int, 0)
+	entries, err := GetUserEntries(ctx, u.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range entries {
+		result = append(result, v.Day)
+	}
+	return result, nil
 }
 
 func (u *User) RequestItems(ctx context.Context) ([]*UserRequestItem, error) {
@@ -238,53 +237,6 @@ func ChangeUserRole(ctx context.Context, userID int, role Role) (*User, error) {
 	}
 
 	user.Role = role
-	if err := orm(ctx).Save(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func ChangeUserEntry(ctx context.Context, userID, day int, entry bool) (*User, error) {
-	user := User{}
-	if err := orm(ctx).First(&user, userID).Error; err != nil {
-		return nil, panicUnlessNotFound(err)
-	}
-
-	switch day {
-	case 1:
-		user.EntryDay1 = entry
-	case 2:
-		user.EntryDay2 = entry
-	case 3:
-		user.EntryDay3 = entry
-	}
-
-	if err := orm(ctx).Save(&user).Error; err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-
-func ChangeUserEntries(ctx context.Context, userID int, entries []int) (*User, error) {
-	user := User{}
-	if err := orm(ctx).First(&user, userID).Error; err != nil {
-		return nil, panicUnlessNotFound(err)
-	}
-
-	user.EntryDay1 = false
-	user.EntryDay2 = false
-	user.EntryDay3 = false
-	for _, v := range entries {
-		switch v {
-		case 1:
-			user.EntryDay1 = true
-		case 2:
-			user.EntryDay2 = true
-		case 3:
-			user.EntryDay3 = true
-		}
-	}
-
 	if err := orm(ctx).Save(&user).Error; err != nil {
 		return nil, err
 	}
