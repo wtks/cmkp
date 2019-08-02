@@ -2,26 +2,28 @@
   v-container(fluid grid-list-md)
     v-card
       v-card-text 右下の+ボタンからメンバー登録ができます。
-    v-layout(row wrap)
-      v-radio-group(v-model="filterDay" row)
-        v-radio(label="全員" :value="null")
-        v-radio(label="1日目" :value="1")
-        v-radio(label="2日目" :value="2")
-        v-radio(label="3日目" :value="3")
-    v-layout(row wrap)
-      template(v-for="user in filteredUsers")
-        v-flex(xs12 sm6 md4 lg3)
-          v-card
-            v-card-title
-              span.headline {{ user.displayName }} (@{{ user.name }})
-            v-card-text
-              v-chip(v-if="user.role === 'PLANNER'" color="green" text-color="white" small) プランナー
-              v-chip(v-else-if="user.role === 'ADMIN'" color="red" text-color="white" small) 管理人
-              v-chip(v-for="day in user.entryDays" :key="day" color="primary" text-color="white" small) {{ day }}日目
-            v-card-actions
-              v-btn(depressed small @click.stop="openEditEntryDialog(user)") 参加日程修正
-              v-btn(depressed small @click.stop="openChangePasswordDialog(user)") パスワード変更
-              v-btn(depressed small @click.stop="openChangePermissionDialog(user)") 権限変更
+    v-progress-linear(v-if="$apollo.queries.fetchData.loading" indeterminate)
+    template(v-else)
+      v-layout(row wrap)
+        v-radio-group(v-model="filterDay" row)
+          v-radio(label="全員" :value="null")
+          v-radio(label="1日目" :value="1")
+          v-radio(label="2日目" :value="2")
+          v-radio(label="3日目" :value="3")
+      v-layout(row wrap)
+        template(v-for="user in filteredUsers")
+          v-flex(xs12 sm6 md4 lg3)
+            v-card
+              v-card-title
+                span.headline {{ user.displayName }} (@{{ user.name }})
+              v-card-text
+                v-chip(v-if="user.role === 'PLANNER'" color="green" text-color="white" small) プランナー
+                v-chip(v-else-if="user.role === 'ADMIN'" color="red" text-color="white" small) 管理人
+                v-chip(v-for="day in user.entries" :key="day" color="primary" text-color="white" small) {{ day }}日目
+              v-card-actions
+                v-btn(depressed small @click.stop="openEditEntryDialog(user)") 参加日程修正
+                v-btn(depressed small @click.stop="openChangePasswordDialog(user)") パスワード変更
+                v-btn(depressed small @click.stop="openChangePermissionDialog(user)") 権限変更
     v-btn(fixed dark fab bottom right color="blue darken-2" to="/admin/users/create")
       v-icon add
     v-dialog(v-model="editEntryDialog" width=500 persistent)
@@ -71,7 +73,7 @@ const getDatas = gql`
       name
       displayName
       role
-      entryDays
+      entries
     }
   }
 `
@@ -93,7 +95,7 @@ const changeRole = gql`
 
 const changeEntry = gql`
   mutation ($id: Int!, $entries: [Int!]!) {
-    changeUserEntries(userId: $id, entries: $entries) {
+    changeEntry: changeUserEntries(userId: $id, entries: $entries) {
       id
       entryDays
     }
@@ -135,7 +137,7 @@ export default {
   },
   computed: {
     filteredUsers: function () {
-      return this.users.filter(v => this.filterDay ? v.entryDays.includes(this.filterDay) : true)
+      return this.users.filter(v => this.filterDay ? v.entries.includes(this.filterDay) : true)
     }
   },
   methods: {
@@ -152,7 +154,7 @@ export default {
             const data = store.readQuery({ query: getDatas })
             data.users.forEach(v => {
               if (v.id === changeEntry.id) {
-                v.entryDays = changeEntry.entryDays
+                v.entries = changeEntry.entries
               }
             })
             store.writeQuery({ query: getDatas, data })
@@ -210,7 +212,7 @@ export default {
     },
     openEditEntryDialog (user) {
       this.editUser = user
-      this.editEntries = [...user.entryDays]
+      this.editEntries = [...user.entries]
       this.editEntryDialog = true
     },
     openChangePasswordDialog (user) {
