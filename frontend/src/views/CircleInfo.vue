@@ -1,7 +1,7 @@
 <template lang="pug">
   v-container(fluid grid-list-md)
     v-layout(row wrap)
-      v-flex(v-if="$apollo.queries.fetchData.loading") Loading...
+      v-progress-linear(v-if="$apollo.queries.fetchData.loading" indeterminate)
       template(v-else)
         v-flex
           circle-detail-info(v-bind="fetchData.circle")
