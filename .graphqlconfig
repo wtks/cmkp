@@ -1,0 +1,14 @@
+{
+  "schemaPath": "backend/schema.graphql",
+  "extensions": {
+    "endpoints": {
+      "Default": {
+        "url": "http://localhost:5000/api/graphql",
+        "headers": {
+          "user-agent": "JS GraphQL",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhZG1pbiIsImV4cCI6MTU0NzI5NDMzNywiaWF0IjoxNTQ1NTY2MzM3LCJpc3MiOiJjbWtwIiwic3ViIjoiMSJ9._CnNHmstzK-k_svfk7RrfbDARRtskDyHbqm_wRw61vM"
+        }
+      }
+    }
+  }
+}

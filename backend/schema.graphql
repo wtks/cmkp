@@ -17,7 +17,7 @@ type User {
   displayName: String!
   role: Role!
   entry(day: Int!): Boolean!
-  entryDays: [Int!]!
+  entries: [Int!]!
   requestItems: [UserRequestItem!]!
   requestNotes: [UserRequestNote!]!
   circlePriorities: [UserCirclePriority!]!
@@ -155,13 +155,14 @@ type Query {
 
   deadline(day: Int!): Time!
   isDeadlineOver(day: Int!): Boolean!
-  deadlines(days: [Int!] = null): [Deadline]
+  deadlines(days: [Int!] = null): [Deadline!]
 
   content(id: String!): Content
   contentText(id: String!): String!
 }
 
 type Mutation {
+  changeDisplayName(displayName: String!): User
   changePassword(oldPassword: String!, newPassword: String!): Boolean!
 
   setCirclePriority(day: Int!, rank: Int!, circleId: Int): UserCirclePriority
@@ -172,10 +173,10 @@ type Mutation {
   changeItemPrice(itemId: Int!, price: Int!): Item
 
   createUser(username: String!, displayName: String!, password: String!): User
+  changeUserDisplayName(userId: Int!, displayName: String!): User
   changeUserPassword(userId: Int!, password: String!): Boolean!
   changeUserRole(userId: Int!, role: Role!): User
   changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
-  changeUserEntries(userId: Int!, entries: [Int!]!): User
 
   createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
   changeRequestNum(requestId: Int!, num: Int!): UserRequestItem

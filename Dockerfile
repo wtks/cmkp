@@ -1,4 +1,4 @@
-FROM golang:1.11.1-alpine AS server-build
+FROM golang:1.12.5-alpine AS server-build
 ENV GO111MODULE=on
 RUN apk add --no-cache git
 WORKDIR /go/src/github.com/wtks/cmkp/backend

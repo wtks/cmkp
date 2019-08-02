@@ -27,7 +27,6 @@ var (
 		&Deadline{},
 		&UserCirclePriority{},
 		&Content{},
-		&UserEntry{},
 	}
 	usernameRegex = regexp.MustCompile("^[0-9a-zA-Z_-]{1,20}$")
 	ErrForbidden  = errors.New("forbidden")

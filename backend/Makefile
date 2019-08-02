@@ -1,2 +1,2 @@
 gqlgen:
-	GO111MODULE=off go run scripts/gqlgen.go -v
+	go run scripts/gqlgen.go -v

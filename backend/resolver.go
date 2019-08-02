@@ -19,6 +19,17 @@ func (r *Resolver) Query() QueryResolver {
 
 type mutationResolver struct{ *Resolver }
 
+func (r *mutationResolver) ChangeDisplayName(ctx context.Context, displayName string) (*model.User, error) {
+	return model.ChangeUserDisplayName(ctx, getUserId(ctx), displayName)
+}
+
+func (r *mutationResolver) ChangeUserDisplayName(ctx context.Context, userID int, displayName string) (*model.User, error) {
+	if model.IsGranted(ctx, getUserRole(ctx), model.RoleAdmin) {
+		return model.ChangeUserDisplayName(ctx, userID, displayName)
+	}
+	return nil, model.ErrForbidden
+}
+
 func (r *mutationResolver) SetContent(ctx context.Context, id string, text string) (*model.Content, error) {
 	if len(id) == 0 {
 		return nil, errors.New("id is required")
@@ -31,13 +42,6 @@ func (r *mutationResolver) SetContent(ctx context.Context, id string, text strin
 
 func (r *mutationResolver) SetCirclePriorities(ctx context.Context, day int, circleIds []int) (*model.UserCirclePriority, error) {
 	return model.SetUserCirclePriorities(ctx, getUserId(ctx), day, circleIds)
-}
-
-func (r *mutationResolver) ChangeUserEntries(ctx context.Context, userId int, entries []int) (*model.User, error) {
-	if model.IsGranted(ctx, getUserRole(ctx), model.RoleAdmin) {
-		return model.ChangeUserEntries(ctx, userId, entries)
-	}
-	return nil, model.ErrForbidden
 }
 
 func (r *mutationResolver) ChangePassword(ctx context.Context, oldPassword string, newPassword string) (bool, error) {
@@ -67,15 +71,15 @@ func (r *mutationResolver) ChangeUserEntry(ctx context.Context, userId int, day 
 	return nil, model.ErrForbidden
 }
 
-func (r *mutationResolver) SetDeadline(ctx context.Context, day int, t time.Time) (time.Time, error) {
+func (r *mutationResolver) SetDeadline(ctx context.Context, day int, t time.Time) (*time.Time, error) {
 	if model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
 		dl, err := model.SetDeadline(ctx, day, t)
 		if err != nil {
-			return time.Time{}, err
+			return nil, err
 		}
-		return dl.Datetime, nil
+		return &dl.Datetime, nil
 	}
-	return time.Time{}, model.ErrForbidden
+	return nil, model.ErrForbidden
 }
 
 func (r *mutationResolver) CreateItem(ctx context.Context, circleId int, name string, price int) (*model.Item, error) {
@@ -310,12 +314,12 @@ func (r *queryResolver) Circles(ctx context.Context, q string, days []int) ([]*m
 	return model.SearchCircles(ctx, q, days)
 }
 
-func (r *queryResolver) Deadline(ctx context.Context, day int) (time.Time, error) {
+func (r *queryResolver) Deadline(ctx context.Context, day int) (*time.Time, error) {
 	deadline, err := model.GetDeadline(ctx, day)
 	if err != nil {
-		return time.Time{}, err
+		return nil, err
 	}
-	return deadline.Datetime, nil
+	return &deadline.Datetime, nil
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {

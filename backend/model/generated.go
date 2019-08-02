@@ -16,6 +16,12 @@ const (
 	RolePlanner Role = "PLANNER"
 )
 
+var AllRole = []Role{
+	RoleAdmin,
+	RoleUser,
+	RolePlanner,
+}
+
 func (e Role) IsValid() bool {
 	switch e {
 	case RoleAdmin, RoleUser, RolePlanner:

@@ -21,6 +21,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -36,6 +37,7 @@ func init() {
 	viper.SetDefault("MYSQL_PASSWORD", "password")
 	viper.SetDefault("JWT_SECRET", "cmkpsupersecret")
 	viper.SetDefault("PORT", 3000)
+	viper.SetDefault("CMKP_EVENT_DAYS", 4)
 	viper.AutomaticEnv()
 }
 
@@ -121,7 +123,7 @@ func main() {
 
 	// graceful shutdown
 	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	<-quit
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -152,7 +154,7 @@ func initAdminUser(ctx context.Context) error {
 }
 
 func initDeadline(ctx context.Context) error {
-	for i := 0; i < 4; i++ {
+	for i := 0; i <= viper.GetInt("CMKP_EVENT_DAYS"); i++ {
 		_, err := model.GetDeadline(ctx, i)
 		if err == gorm.ErrRecordNotFound {
 			if _, err := model.SetDeadline(ctx, i, time.Now().Truncate(time.Minute)); err != nil {

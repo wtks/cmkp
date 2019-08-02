@@ -2,9 +2,12 @@ package model
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -48,39 +51,80 @@ func createUserLoader(ctx context.Context) *UserLoader {
 	}
 }
 
+type IntSlice []int
+
+func (i *IntSlice) Scan(src interface{}) error {
+	*i = make(IntSlice, 0)
+	var vs string
+	switch t := src.(type) {
+	case string:
+		vs = t
+	case []byte:
+		vs = string(t)
+	}
+	for _, v := range strings.Split(vs, ",") {
+		if n, err := strconv.Atoi(v); err == nil {
+			*i = append(*i, n)
+		}
+	}
+	return nil
+}
+
+func (i IntSlice) Value() (driver.Value, error) {
+	s := make([]string, len(i))
+	for k, v := range i {
+		s[k] = strconv.Itoa(v)
+	}
+	return strings.Join(s, ","), nil
+}
+
+func (i *IntSlice) Add(v int) {
+	if !i.Has(v) {
+		*i = append(*i, v)
+	}
+}
+
+func (i *IntSlice) Remove(v int) {
+	if i.Has(v) {
+		m := map[int]bool{}
+		for _, v := range *i {
+			m[v] = true
+		}
+		delete(m, v)
+		r := make(IntSlice, 0, len(m))
+		for k := range m {
+			r = append(r, k)
+		}
+		*i = r
+	}
+}
+
+func (i IntSlice) Has(v int) bool {
+	for _, w := range i {
+		if w == v {
+			return true
+		}
+	}
+	return false
+}
+
 type User struct {
 	ID                int       `gorm:"primary_key"`
 	Name              string    `gorm:"type:varchar(20);unique"`
 	DisplayName       string    `gorm:"type:varchar(30)"`
 	EncryptedPassword string    `gorm:"type:text"`
 	Role              Role      `gorm:"type:varchar(10)"`
+	EntryDays         IntSlice  `gorm:"type:text"`
 	CreatedAt         time.Time `gorm:"precision:6"`
 	UpdatedAt         time.Time `gorm:"precision:6"`
 }
 
 func (u *User) Entry(ctx context.Context, day int) (bool, error) {
-	days, err := u.EntryDays(ctx)
-	if err != nil {
-		return false, err
-	}
-	for i := range days {
-		if days[i] == day {
-			return true, nil
-		}
-	}
-	return false, nil
+	return u.EntryDays.Has(day), nil
 }
 
-func (u *User) EntryDays(ctx context.Context) ([]int, error) {
-	result := make([]int, 0)
-	entries, err := GetUserEntries(ctx, u.ID)
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range entries {
-		result = append(result, v.Day)
-	}
-	return result, nil
+func (u *User) Entries(ctx context.Context) ([]int, error) {
+	return u.EntryDays, nil
 }
 
 func (u *User) RequestItems(ctx context.Context) ([]*UserRequestItem, error) {
@@ -237,6 +281,39 @@ func ChangeUserRole(ctx context.Context, userID int, role Role) (*User, error) {
 	}
 
 	user.Role = role
+	if err := orm(ctx).Save(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func ChangeUserEntry(ctx context.Context, userID, day int, entry bool) (*User, error) {
+	user := User{}
+	if err := orm(ctx).First(&user, userID).Error; err != nil {
+		return nil, panicUnlessNotFound(err)
+	}
+
+	if entry {
+		user.EntryDays.Add(day)
+	} else {
+		user.EntryDays.Remove(day)
+	}
+	if err := orm(ctx).Save(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func ChangeUserDisplayName(ctx context.Context, userID int, displayName string) (*User, error) {
+	user := User{}
+	if err := orm(ctx).First(&user, userID).Error; err != nil {
+		return nil, panicUnlessNotFound(err)
+	}
+	if err := v.Var(displayName, "max=30,required"); err != nil {
+		return nil, err
+	}
+
+	user.DisplayName = displayName
 	if err := orm(ctx).Save(&user).Error; err != nil {
 		return nil, err
 	}
