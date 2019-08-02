@@ -9,7 +9,7 @@
               v-card-text
                 v-chip(v-if="user.role === 'PLANNER'" color="green" text-color="white" small) プランナー
                 v-chip(v-else-if="user.role === 'ADMIN'" color="red" text-color="white" small) 管理人
-                v-chip(v-for="day in user.entryDays" :key="day" color="primary" text-color="white" small) {{ day }}日目
+                v-chip(v-for="day in user.entries" :key="day" color="primary" text-color="white" small) {{ day }}日目
           v-flex(d-flex xs12)
             v-card
               v-card-title.headline リクエスト備考
@@ -63,7 +63,7 @@
           v-btn(flat color="primary" @click.native="editRequest" :disabled="editItemDialog.sending || !editItemDialog.valid" :loading="editItemDialog.editing") 修正
     v-dialog(v-model="addItemDialog.open" persistent)
       v-card
-        v-toolbar
+        v-toolbar(card)
           v-btn(icon @click="addItemDialog.open = false")
             v-icon close
           v-toolbar-title {{ user.displayName }}のリクエストを追加
@@ -97,7 +97,7 @@ const getData = gql`
       name
       displayName
       role
-      entryDays
+      entries
     }
     requestNotes(userId: $uid) {
       id

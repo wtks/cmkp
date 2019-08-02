@@ -15,12 +15,12 @@
             span ◎限数・搬入数やお品書きなどの情報があればそのサークルのサークルメモに書いてもらえると助かります。また、価格未定で登録した商品は価格が決まり次第、リクエストの修正から入力してください。
       v-flex
         v-card
-          v-card-title 参加予定日
+          v-card-title あなたの参加予定日
           v-card-text
             template(v-if="$apollo.queries.fetchData.loading")
               span ロード中...
             template(v-else)
-              v-chip(v-for="day in fetchData.me.entryDays" :key="day" color="primary" text-color="white" small) {{ day }}日目
+              v-chip(v-for="day in fetchData.me.entries" :key="day" color="primary" text-color="white" small) {{ day }}日目
       v-flex
         v-card
           v-card-title リクエスト受付締め切り日時
@@ -45,7 +45,7 @@ import dayjs from 'dayjs'
 const getMe = gql`
   query {
     me {
-      entryDays
+      entries
     }
     day0: deadline(day: 0)
     day1: deadline(day: 1)
@@ -60,7 +60,7 @@ export default {
     return {
       fetchData: {
         me: {
-          entryDays: []
+          entries: []
         },
         day0: null,
         day1: null,
