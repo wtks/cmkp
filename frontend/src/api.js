@@ -19,7 +19,7 @@ let baseUrl
 if (process.env.NODE_ENV === 'production') {
   baseUrl = process.env.VUE_APP_API_ENDPOINT + '/api/'
 } else {
-  baseUrl = process.env.VUE_APP_API_ENDPOINT + '/api/' || 'http://localhost:3000/api/'
+  baseUrl = process.env.VUE_APP_API_ENDPOINT || 'http://localhost:5000/api/'
 }
 
 const { apolloClient, wsClient } = createApolloClient({
