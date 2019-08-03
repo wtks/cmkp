@@ -1,10 +1,11 @@
 <template lang="pug">
   v-container(fluid v-scroll="onScroll")
-    v-text-field(:disabled="$apollo.queries.circles.loading" :loading="$apollo.queries.circles.loading" append-icon="search" v-model="query" placeholder="サークル名または作家名を入力")
+    v-text-field(:disabled="$apollo.queries.circles.loading" :loading="$apollo.queries.circles.loading" append-icon="search" v-model="query" placeholder="企業/サークル/作家名を入力")
     v-layout(row wrap)
       v-checkbox(label="1日目" :value="1" v-model="filterDays")
       v-checkbox(label="2日目" :value="2" v-model="filterDays")
       v-checkbox(label="3日目" :value="3" v-model="filterDays")
+      v-checkbox(label="4日目" :value="4" v-model="filterDays")
       v-checkbox(label="企業"  :value="0" v-model="filterDays")
     v-container(fluid grid-list-md)
       v-data-iterator(:items="circles" :loading="$apollo.queries.circles.loading" content-tag="v-layout" row wrap hide-actions)
@@ -41,7 +42,7 @@ export default {
     return {
       offsetTop: 0,
       query: '',
-      filterDays: [0, 1, 2, 3],
+      filterDays: [0, 1, 2, 3, 4],
       circles: []
     }
   },

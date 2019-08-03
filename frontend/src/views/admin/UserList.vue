@@ -2,7 +2,7 @@
   v-container(fluid grid-list-md)
     v-card
       v-card-text 右下の+ボタンからメンバー登録ができます。
-    v-progress-linear(v-if="$apollo.queries.fetchData.loading" indeterminate)
+    v-progress-linear(v-if="$apollo.queries.users.loading" indeterminate)
     template(v-else)
       v-layout(row wrap)
         v-radio-group(v-model="filterDay" row)
@@ -10,6 +10,7 @@
           v-radio(label="1日目" :value="1")
           v-radio(label="2日目" :value="2")
           v-radio(label="3日目" :value="3")
+          v-radio(label="4日目" :value="4")
       v-layout(row wrap)
         template(v-for="user in filteredUsers")
           v-flex(xs12 sm6 md4 lg3)
@@ -35,6 +36,7 @@
             v-checkbox(v-model="editEntries" :value="1" label="1日目")
             v-checkbox(v-model="editEntries" :value="2" label="2日目")
             v-checkbox(v-model="editEntries" :value="3" label="3日目")
+            v-checkbox(v-model="editEntries" :value="4" label="4日目")
         v-card-actions
           v-spacer
           v-btn(flat @click.native="editEntryDialog = false") キャンセル
