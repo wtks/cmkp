@@ -99,7 +99,7 @@ const changeEntry = gql`
   mutation ($id: Int!, $entries: [Int!]!) {
     changeEntry: changeUserEntries(userId: $id, entries: $entries) {
       id
-      entryDays
+      entries
     }
   }
 `
