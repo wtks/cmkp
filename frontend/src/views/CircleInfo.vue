@@ -5,7 +5,7 @@
       template(v-else)
         v-flex
           circle-detail-info(v-bind="fetchData.circle")
-        v-flex
+        v-flex(v-show="false")
           v-card
             v-card-title.headline サークルメモ
             v-card-text
