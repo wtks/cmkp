@@ -259,7 +259,7 @@ func (r *queryResolver) ContentText(ctx context.Context, id string) (string, err
 }
 
 func (r *queryResolver) Deadlines(ctx context.Context, days []int) ([]*model.Deadline, error) {
-	if days == nil {
+	if len(days) == 0 {
 		return model.GetDeadlines(ctx)
 	}
 

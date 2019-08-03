@@ -28,13 +28,13 @@
             template(v-if="$apollo.queries.fetchData.loading")
               span ロード中...
             template(v-else)
-              span 企業: {{ formatDatetime(fetchData.day0) }}
-              br
-              span 1日目: {{ formatDatetime(fetchData.day1) }}
-              br
-              span 2日目: {{ formatDatetime(fetchData.day2) }}
-              br
-              span 3日目: {{ formatDatetime(fetchData.day3) }}
+              span(v-for="deadline in deadlines" :key="deadline.day")
+                template(v-if="deadline.day === 0")
+                  span 企業: {{ formatDatetime(deadline.datetime) }}
+                  br
+                template(v-else)
+                  span {{deadline.day}}日目: {{ formatDatetime(deadline.datetime) }}
+                  br
 
 </template>
 
@@ -47,10 +47,11 @@ const getMe = gql`
     me {
       entries
     }
-    day0: deadline(day: 0)
-    day1: deadline(day: 1)
-    day2: deadline(day: 2)
-    day3: deadline(day: 3)
+    deadlines {
+      day
+      datetime
+      over
+    }
   }
 `
 
@@ -62,11 +63,13 @@ export default {
         me: {
           entries: []
         },
-        day0: null,
-        day1: null,
-        day2: null,
-        day3: null
+        deadlines: []
       }
+    }
+  },
+  computed: {
+    deadlines: function () {
+      return this.fetchData.deadlines
     }
   },
   apollo: {

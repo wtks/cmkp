@@ -30,7 +30,7 @@ func GetDeadline(ctx context.Context, day int) (*Deadline, error) {
 
 func GetDeadlines(ctx context.Context) ([]*Deadline, error) {
 	arr := make([]*Deadline, 0)
-	if err := orm(ctx).Find(&arr).Error; err != nil {
+	if err := orm(ctx).Order("day").Find(&arr).Error; err != nil {
 		panic(err)
 	}
 	return arr, nil
