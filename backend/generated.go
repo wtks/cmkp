@@ -112,6 +112,7 @@ type ComplexityRoot struct {
 		ChangePassword        func(childComplexity int, oldPassword string, newPassword string) int
 		ChangeRequestNum      func(childComplexity int, requestID int, num int) int
 		ChangeUserDisplayName func(childComplexity int, userID int, displayName string) int
+		ChangeUserEntries     func(childComplexity int, userID int, entries []int) int
 		ChangeUserEntry       func(childComplexity int, userID int, day int, entry bool) int
 		ChangeUserPassword    func(childComplexity int, userID int, password string) int
 		ChangeUserRole        func(childComplexity int, userID int, role model.Role) int
@@ -231,6 +232,7 @@ type MutationResolver interface {
 	ChangeUserPassword(ctx context.Context, userID int, password string) (bool, error)
 	ChangeUserRole(ctx context.Context, userID int, role model.Role) (*model.User, error)
 	ChangeUserEntry(ctx context.Context, userID int, day int, entry bool) (*model.User, error)
+	ChangeUserEntries(ctx context.Context, userID int, entries []int) (*model.User, error)
 	CreateRequest(ctx context.Context, userID *int, itemID int, num int) (*model.UserRequestItem, error)
 	ChangeRequestNum(ctx context.Context, requestID int, num int) (*model.UserRequestItem, error)
 	DeleteRequest(ctx context.Context, id int) (bool, error)
@@ -693,6 +695,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ChangeUserDisplayName(childComplexity, args["userId"].(int), args["displayName"].(string)), true
+
+	case "Mutation.changeUserEntries":
+		if e.complexity.Mutation.ChangeUserEntries == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changeUserEntries_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangeUserEntries(childComplexity, args["userId"].(int), args["entries"].([]int)), true
 
 	case "Mutation.changeUserEntry":
 		if e.complexity.Mutation.ChangeUserEntry == nil {
@@ -1720,6 +1734,7 @@ type Mutation {
   changeUserPassword(userId: Int!, password: String!): Boolean!
   changeUserRole(userId: Int!, role: Role!): User
   changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
+  changeUserEntries(userId: Int!, entries: [Int!]!): User
 
   createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
   changeRequestNum(requestId: Int!, num: Int!): UserRequestItem
@@ -1907,6 +1922,28 @@ func (ec *executionContext) field_Mutation_changeUserDisplayName_args(ctx contex
 		}
 	}
 	args["displayName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_changeUserEntries_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["userId"]; ok {
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	var arg1 []int
+	if tmp, ok := rawArgs["entries"]; ok {
+		arg1, err = ec.unmarshalNInt2ᚕint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["entries"] = arg1
 	return args, nil
 }
 
@@ -4844,6 +4881,47 @@ func (ec *executionContext) _Mutation_changeUserEntry(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().ChangeUserEntry(rctx, args["userId"].(int), args["day"].(int), args["entry"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋwtksᚋcmkpᚋbackendᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_changeUserEntries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_changeUserEntries_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ChangeUserEntries(rctx, args["userId"].(int), args["entries"].([]int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9627,6 +9705,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_changeUserRole(ctx, field)
 		case "changeUserEntry":
 			out.Values[i] = ec._Mutation_changeUserEntry(ctx, field)
+		case "changeUserEntries":
+			out.Values[i] = ec._Mutation_changeUserEntries(ctx, field)
 		case "createRequest":
 			out.Values[i] = ec._Mutation_createRequest(ctx, field)
 		case "changeRequestNum":

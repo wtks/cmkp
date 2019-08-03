@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -124,6 +125,7 @@ func (u *User) Entry(ctx context.Context, day int) (bool, error) {
 }
 
 func (u *User) Entries(ctx context.Context) ([]int, error) {
+	sort.Ints(u.EntryDays)
 	return u.EntryDays, nil
 }
 
@@ -298,6 +300,28 @@ func ChangeUserEntry(ctx context.Context, userID, day int, entry bool) (*User, e
 	} else {
 		user.EntryDays.Remove(day)
 	}
+	if err := orm(ctx).Save(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func ChangeUserEntries(ctx context.Context, userID int, entries []int) (*User, error) {
+	user := User{}
+	if err := orm(ctx).First(&user, userID).Error; err != nil {
+		return nil, panicUnlessNotFound(err)
+	}
+
+	set := map[int]bool{}
+	result := make(IntSlice, 0)
+	for _, v := range entries {
+		if !set[v] {
+			set[v] = true
+			result = append(result, v)
+		}
+	}
+
+	user.EntryDays = result
 	if err := orm(ctx).Save(&user).Error; err != nil {
 		return nil, err
 	}

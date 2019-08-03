@@ -19,6 +19,13 @@ func (r *Resolver) Query() QueryResolver {
 
 type mutationResolver struct{ *Resolver }
 
+func (r *mutationResolver) ChangeUserEntries(ctx context.Context, userID int, entries []int) (*model.User, error) {
+	if model.IsGranted(ctx, getUserRole(ctx), model.RoleAdmin) {
+		return model.ChangeUserEntries(ctx, userID, entries)
+	}
+	return nil, model.ErrForbidden
+}
+
 func (r *mutationResolver) ChangeDisplayName(ctx context.Context, displayName string) (*model.User, error) {
 	return model.ChangeUserDisplayName(ctx, getUserId(ctx), displayName)
 }

@@ -177,6 +177,7 @@ type Mutation {
   changeUserPassword(userId: Int!, password: String!): Boolean!
   changeUserRole(userId: Int!, role: Role!): User
   changeUserEntry(userId: Int!, day: Int!, entry: Boolean!): User
+  changeUserEntries(userId: Int!, entries: [Int!]!): User
 
   createRequest(userId: Int = null, itemId: Int!, num: Int!): UserRequestItem
   changeRequestNum(requestId: Int!, num: Int!): UserRequestItem
