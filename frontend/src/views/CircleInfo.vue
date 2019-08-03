@@ -62,10 +62,10 @@ const getData = gql`
       createdAt
       updatedAt
     },
-    day0: deadline(day: 0)
-    day1: deadline(day: 1)
-    day2: deadline(day: 2)
-    day3: deadline(day: 3)
+    deadlines {
+      day
+      over
+    }
   }
 `
 
@@ -103,10 +103,7 @@ export default {
           day: null
         },
         circleMemos: [],
-        day0: null,
-        day1: null,
-        day2: null,
-        day3: null
+        deadlines: []
       },
       sending: false,
       dialog: false,
@@ -128,18 +125,12 @@ export default {
   },
   computed: {
     isDeadlineOver () {
-      switch (this.fetchData.circle.day) {
-        case 0:
-          return dayjs(this.fetchData.day0).isBefore(dayjs())
-        case 1:
-          return dayjs(this.fetchData.day1).isBefore(dayjs())
-        case 2:
-          return dayjs(this.fetchData.day2).isBefore(dayjs())
-        case 3:
-          return dayjs(this.fetchData.day3).isBefore(dayjs())
-        default:
-          return false
+      for (let deadline of this.fetchData.deadlines) {
+        if (deadline.day === this.fetchData.circle.day) {
+          return deadline.over
+        }
       }
+      return false
     }
   },
   methods: {
