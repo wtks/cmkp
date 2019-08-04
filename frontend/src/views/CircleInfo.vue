@@ -5,6 +5,10 @@
       template(v-else)
         v-flex
           circle-detail-info(v-bind="fetchData.circle")
+        v-flex(v-if="fetchData.circle.twitterId !== null" xs12 sm6 md6 lg4)
+          v-card
+            v-card-text
+              timeline(:id="fetchData.circle.twitterId" sourceType="profile" :options="{ height: 400 }")
         v-flex(v-show="false")
           v-card
             v-card-title.headline サークルメモ
@@ -33,6 +37,7 @@
 import gql from 'graphql-tag'
 import CircleDetailInfo from '../components/CircleDetailInfo'
 import CircleMemo from '../components/CircleMemo'
+import { Timeline } from 'vue-tweet-embed'
 
 const getData = gql`
   query ($cid: Int!) {
@@ -87,7 +92,8 @@ export default {
   name: 'CircleInfo',
   components: {
     CircleDetailInfo,
-    CircleMemo
+    CircleMemo,
+    Timeline
   },
   props: {
     cid: {
