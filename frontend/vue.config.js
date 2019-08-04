@@ -3,5 +3,11 @@ module.exports = {
     proxy: 'http://localhost:5000',
     disableHostCheck: true
   },
-  pluginOptions: undefined
+  pluginOptions: undefined,
+  pwa: {
+    workboxOptions: {
+      skipWaiting: true,
+      clientsClaim: true
+    }
+  }
 }
