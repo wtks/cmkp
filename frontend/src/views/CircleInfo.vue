@@ -31,7 +31,6 @@
 
 <script>
 import gql from 'graphql-tag'
-import dayjs from 'dayjs'
 import CircleDetailInfo from '../components/CircleDetailInfo'
 import CircleMemo from '../components/CircleMemo'
 

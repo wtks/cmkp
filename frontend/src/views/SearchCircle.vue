@@ -13,7 +13,8 @@
           v-card.lighten-5(:to="`/circles/${props.item.id}`" :class="[{'blue': props.item.day === 1}, {'teal': props.item.day === 2}, {'lime': props.item.day === 3}, {'orange': props.item.day === 0}]")
             v-card-text
               div.caption {{ props.item.locationString }}
-              div {{ props.item.name }} - {{ props.item.author }}
+              div(v-if="props.item.day !== 0") {{ props.item.name }} - {{ props.item.author }}
+              div(v-else) {{ props.item.name }}
         p(slot="no-data") 見つかりませんでした
     v-fade-transition
       v-btn(fixed dark fab bottom right color="blue darken-2" @click="$vuetify.goTo(0)" v-show="offsetTop > 100")

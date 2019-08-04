@@ -3,22 +3,26 @@
     v-card-title.headline サークル情報
     v-card-text
       dl
-        dt サークル名
-        dd {{ name }}
-        dt 作家名
-        dd {{ author }}
+        template(v-if="day === 0")
+          dt 企業名
+          dd {{ name }}
+        template(v-else)
+          dt サークル名
+          dd {{ name }}
+          dt 作家名
+          dd {{ author }}
         dt 場所
         dd
           | {{ locationString }}
           span.orange--text(v-if="locationType === 1") {{ locationTypeString }}
           span.red--text(v-else-if="locationType === 2") {{ locationTypeString }}
-        template(v-if="genre != null")
+        template(v-if="genre != null && day !== 0")
           dt ジャンル
           dd {{ genre }}
         template(v-if="website != null || twitterId != null || pixivId != null || niconicoId != null")
           dt 外部リンク
           dd
-            v-btn(v-if="website != null" icon :href="website" target="_blank")
+            v-btn(v-if="website !== ''" icon :href="website" target="_blank")
               v-icon home
             v-btn(v-if="twitterId != null" icon :href="`https://twitter.com/${twitterId}`" target="_blank")
               v-icon(color="blue") fab fa-twitter
