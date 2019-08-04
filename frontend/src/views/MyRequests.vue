@@ -7,7 +7,7 @@
         | 登録商品を押すと、登録情報を修正・削除できます。サークル名を押すとサークル詳細を確認できます。
         v-select(label="日程" :items="daySelectItems" v-model="selectedDay")
         p 合計：{{ circleCount }}サークル, {{ totalCosts }}
-        v-btn(color="primary" depressed block :disabled="isSelectedDayDeadlineOver" @click="openEditPriorityDialog") 希望優先順位を設定する
+        v-btn(color="primary" depressed block :disabled="isSelectedDayDeadlineOver" @click="openEditPriorityDialog") {{selectedDay !== '全日' ? `希望優先順位を設定する` : `日程を選択してください`}}
 
     v-layout(row wrap)
       v-flex(xs12 sm12 md6 lg4 v-for="circle in filteredRequests" :key="circle.id")
