@@ -1,6 +1,0 @@
-query {
-  day0: deadline(day: 0)
-  day1: deadline(day: 1)
-  day2: deadline(day: 2)
-  day3: deadline(day: 3)
-}

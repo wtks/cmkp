@@ -4,7 +4,7 @@
       v-flex
         v-card
           v-card-text
-            span ◎メニューの「マイリクエスト」または「サークル検索」から、買ってきて欲しい物のリクエスト等を行ってください。
+            span ◎サイドメニュー(左上のボタン)の「マイリクエスト」または「サークル検索」から、買ってきて欲しい物のリクエスト等を行ってください。
             br
             span ◎リクエストをし終わったら、必ず「マイリクエスト」の「希望優先順位を設定する」から特に優先して買ってきて欲しいサークルを、上位５サークルまで日程毎に設定してください。
             br
@@ -80,7 +80,7 @@ export default {
     }
   },
   methods: {
-    formatDatetime: dt => dayjs(dt).format('YYYY/MM/DD HH:mm:ss')
+    formatDatetime: dt => dayjs(dt).format('MM/DD HH:mm')
   }
 }
 </script>
