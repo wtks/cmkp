@@ -83,7 +83,7 @@
               v-icon settings
             v-list-tile-content
               v-list-tile-title 設定
-    v-toolbar(app)
+    v-toolbar(app dense flat dark)
       v-toolbar-side-icon(@click.stop="drawer = !drawer")
       v-btn(v-show="backPagePath !== ''" icon :to="backPagePath" exact)
         v-icon arrow_back
