@@ -92,10 +92,12 @@ const getData = gql`
     priorities1: myCirclePriorityIds(day: 1)
     priorities2: myCirclePriorityIds(day: 2)
     priorities3: myCirclePriorityIds(day: 3)
+    priorities4: myCirclePriorityIds(day: 4)
     day0: deadline(day: 0)
     day1: deadline(day: 1)
     day2: deadline(day: 2)
     day3: deadline(day: 3)
+    day4: deadline(day: 4)
   }
 `
 
@@ -119,13 +121,15 @@ export default {
         priorities1: [],
         priorities2: [],
         priorities3: [],
+        priorities4: [],
         day0: null,
         day1: null,
         day2: null,
-        day3: null
+        day3: null,
+        day4: null
       },
-      selectedDay: '１日目',
-      daySelectItems: ['企業', '１日目', '２日目', '３日目', '全日'],
+      selectedDay: '全日',
+      daySelectItems: ['企業', '１日目', '２日目', '３日目', '４日目', '全日'],
       requestCircleMap: new Map(),
       dialog: false,
       priorityDialog: false,
@@ -208,6 +212,8 @@ export default {
           return 2
         case '３日目':
           return 3
+        case '４日目':
+          return 4
         default:
           return null
       }
@@ -238,6 +244,9 @@ export default {
         case '3':
           this.selectedDay = '３日目'
           break
+        case '4':
+          this.selectedDay = '４日目'
+          break
       }
     }
   },
@@ -252,6 +261,8 @@ export default {
           return dayjs(this.fetchData.day2).isBefore(dayjs())
         case 3:
           return dayjs(this.fetchData.day3).isBefore(dayjs())
+        case 4:
+          return dayjs(this.fetchData.day4).isBefore(dayjs())
         default:
           return true
       }
@@ -350,6 +361,9 @@ export default {
           break
         case 3:
           ids = this.fetchData.priorities3
+          break
+        case 4:
+          ids = this.fetchData.priorities4
           break
         default:
           return
