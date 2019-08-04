@@ -2,9 +2,7 @@
   v-container(fluid fill-height)
     v-layout(align-center justify-center)
       v-flex(xs12 sm8 md4)
-        v-card.elevation-12
-          v-toolbar(dark color="primary")
-            v-toolbar-title ログイン
+        v-card
           v-card-text
             v-form(ref="form" v-model="valid")
               v-text-field(prepend-icon="person" :rules="[v => !!v || 'IDを入力してください']" label="ID" type="text" v-model="username" required)
