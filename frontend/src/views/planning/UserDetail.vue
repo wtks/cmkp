@@ -69,7 +69,7 @@
           v-toolbar-title {{ user.displayName }}のリクエストを追加
           v-spacer
           v-toolbar-items
-            v-btn(color="primary" :disabled="!addItemDialog.valid || addItemDialog.sending" :loading="addItemDialog.sending") 登録
+            v-btn(color="primary" :disabled="!addItemDialog.valid || addItemDialog.sending" :loading="addItemDialog.sending" @click="createRequest") 登録
         v-card-text
           v-form(v-model="addItemDialog.valid")
             v-autocomplete(hide-no-data hide-selected :item-text="v => `${v.locationString} ${v.name} ${v.author}`" item-value="id" label="サークル選択" return-object placeholder="サークル名または作家名を入力" :items="searchCircles" v-model="addItemDialog.circle" :loading="$apollo.queries.searchCircles.loading" :search-input.sync="addItemDialog.query" clearable required :rules="[rules.required]")
