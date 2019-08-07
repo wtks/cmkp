@@ -178,12 +178,15 @@ func (r *mutationResolver) ChangeRequestNum(ctx context.Context, requestId int, 
 	if err != nil {
 		return nil, err
 	}
-	dl, err := model.GetDeadline(ctx, circle.Day)
-	if err != nil {
-		return nil, err
-	}
-	if dl.IsOver() {
-		return nil, errors.New("deadline is over")
+
+	if !model.IsGranted(ctx, getUserRole(ctx), model.RolePlanner) {
+		dl, err := model.GetDeadline(ctx, circle.Day)
+		if err != nil {
+			return nil, err
+		}
+		if dl.IsOver() {
+			return nil, errors.New("deadline is over")
+		}
 	}
 
 	return model.ChangeUserRequestItemNum(ctx, requestId, num)
