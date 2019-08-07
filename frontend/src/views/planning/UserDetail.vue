@@ -275,7 +275,7 @@ export default {
       }, ...this.circleItems]
     },
     isNewItem: function () {
-      return this.addItemDialog.selectedItem != null && this.addItemDialog.selectedItem.id == null
+      return this.addItemDialog.selectedItem !== null && this.addItemDialog.selectedItem.id === null
     }
   },
   watch: {
@@ -344,7 +344,7 @@ export default {
       this.addItemDialog.sending = true
       try {
         let itemId
-        if (this.isNewItem) {
+        if (!this.isNewItem) {
           itemId = this.addItemDialog.selectedItem.id
           if (this.addItemDialog.price !== this.addItemDialog.selectedItem.price) {
             await this.$apollo.mutate({
