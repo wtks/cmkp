@@ -74,7 +74,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{MaxAge: 86400}))
 	e.Use(middleware.Gzip())
 
 	// routing api
