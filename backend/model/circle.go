@@ -50,8 +50,8 @@ func createCircleLoader(ctx context.Context) *CircleLoader {
 type Circle struct {
 	ID           int       `gorm:"primary_key"      json:"id"`
 	CatalogID    *int      `                        json:"-"`
-	Name         string    `                        json:"name"`
-	Author       string    `                        json:"author"`
+	Name         string    `sql:"type:varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL" json:"name"`
+	Author       string    `sql:"type:varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL" json:"author"`
 	Hall         string    `gorm:"size:1"           json:"hall"`
 	Day          int       `                        json:"day"`
 	Block        string    `gorm:"size:1"           json:"block"`
