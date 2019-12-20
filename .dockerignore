@@ -3,9 +3,12 @@
 cmkp.iml
 .envrc
 .gitignore
+.graphqlconfig
+graphql.config.json
+scraper/
 .git/
-frontend/node_modules
-frontend/dist
+frontend/
+frontend-v2/
 
 backend/gqlgen.yml
 backend/Makefile

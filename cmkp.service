@@ -1,0 +1,13 @@
+[Unit]
+Description=cmkp
+After=syslog.target network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/cmkp
+EnvironmentFile=/opt/cmkp/.env
+ExecStart=/opt/cmkp/cmkp
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
