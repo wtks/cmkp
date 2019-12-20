@@ -6,7 +6,7 @@
         v-form(v-model="valid" lazy-validation)
           v-text-field(v-model="username" :rules="[rules.name]" :counter="20" label="ユーザーID" required)
           v-text-field(v-model="displayName" :rules="[rules.required]" label="表示名(全員に公開されます)" required)
-          v-text-field(v-model="password" :rules="[rules.password]" label="パスワード" :append-icon="visiblePassword ? 'visibility_off' : 'visibility'" :type="visiblePassword ? 'text' : 'password'" @click:append="visiblePassword = !visiblePassword" required)
+          v-text-field(v-model="password" :rules="[rules.password]" label="パスワード" type="text" required)
           v-btn(color="primary" :disabled="!valid" @click.stop="dialog = true" block) 登録
     v-dialog(v-model="dialog" persistent width=500)
       v-card
@@ -42,7 +42,6 @@ export default {
       username: '',
       displayName: '',
       password: '',
-      visiblePassword: false,
       sending: false,
       dialog: false,
       rules: {
