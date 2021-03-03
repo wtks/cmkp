@@ -32,7 +32,7 @@
     "babel-plugin-transform-imports": "^1.5.1",
     "graphql-tag": "^2.9.0",
     "lint-staged": "^8.1.0",
-    "pug": "^2.0.3",
+    "pug": "^3.0.1",
     "pug-loader": "^2.4.0",
     "pug-plain-loader": "^1.0.0",
     "stylus": "^0.54.5",
